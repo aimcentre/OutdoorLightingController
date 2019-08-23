@@ -1,0 +1,61 @@
+// Loads configuration settings from the EEPROM and assigns them to the given "settings" data structure.
+// Resets configuration settings to default settings if the CONFIG_VERSION stated in the source code does not 
+// match with the CONFIG_VERSION stored in the EEPROM. 
+
+void loadConfigSettings(configSettings_t& settings)
+{
+  Serial.println("Loading configuration settings ...");
+  EEPROM.get(0, settings);
+
+  // Printing current settings into the serial debugger
+  showSettings(settings);
+
+  Serial.println("Loaded Config Version: " + String(settings.configVersion));
+  Serial.println("Programmed Config Version: " + String(CONFIG_VERSION));
+
+  Serial.println("Loaded AP SSID: " + String(settings.accessPointSsid));
+
+  // Checking if the CONFIG_VERSION loaded from the EEPROM is different from the CONFIG_VERSION specified in the source code.
+  if(settings.configVersion != CONFIG_VERSION)
+  {
+    // Reset configuration structure with default values specified in the source code.
+    Serial.println();
+    Serial.println("**** Resetting configuration settings ... ****");
+
+    settings.configVersion = CONFIG_VERSION;
+    
+    strncpy(settings.accessPointSsid, AP_NAME, SSID_MAX_LENGTH-1); 
+    settings.accessPointSsid[SSID_MAX_LENGTH-1] = '\0';
+    
+    strncpy(settings.accessPointPassword, DEFAULT_AP_PW, SSID_PASSWORD_MAX_LENGTH-1);
+    settings.accessPointPassword[SSID_PASSWORD_MAX_LENGTH-1] = '\0';
+
+    settings.wifiSsid[0] = 0; //Setting the WiFi SSID to null
+    settings.wifiPassword[0] = 0; //Setting the WiFi Password to null
+    
+    //Saving the updated configuration structure in the EEPROM.
+    EEPROM.put(0, settings);
+    EEPROM.commit();
+
+    Serial.println("New configuration settings:");
+    showSettings(settings);
+  } // END: if(strcmp(settings.configVersion, CONFIG_VERSION) != 0)
+}
+
+// Displays settings in the serial debugger
+void showSettings(configSettings_t& settings)
+{
+  Serial.println();
+  Serial.println("Config version: " + String(settings.configVersion));
+  
+  Serial.println("Access Point SSID: " + String(settings.accessPointSsid));
+  Serial.println("Access Point Password: " + String(settings.accessPointPassword));
+  
+  Serial.println("WiFi SSID: " + String(settings.wifiSsid));
+  if(strlen(settings.wifiPassword) > 0)
+    Serial.println("WiFi Password: ********");
+  else
+    Serial.println("WiFi Password:");
+  
+  Serial.println();
+}

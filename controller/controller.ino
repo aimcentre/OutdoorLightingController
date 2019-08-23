@@ -1,80 +1,82 @@
+// Main entry file of the lighting controller
 
+// References:
+//   Http Server: https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
 
-// Load Wi-Fi library
 #include <WiFi.h>
 #include <EEPROM.h>
+#include <ESPAsyncWebServer.h>
 
-// Change the following config version if the configuration settings structure is changed.
-#define CONFIG_VERSION "1"
+#include "configParams.h"
 
-// Default Access Point name and the password
-#define DEFAULT_AP_NAME "AimLightingController"
-#define DEFAULT_AP_PW "password"
+configSettings_t settings;
+AsyncWebServer server(80);
 
-//struct configSettings_t settings;
-struct configSettings_t
-{
-  char configVersion[16];
-  char ssid[32];
-  char password[16];
-} settings;
-
-
-// Set web server port number to 80
-WiFiServer server(80);
 
 // Variable to store the HTTP request
 String header;
 
-void showSettings(configSettings_t& settings)
-{
-  Serial.println("Config version: " + String(settings.configVersion));
-  Serial.println("SSID: " + String(settings.ssid));
-  Serial.println("Password: " + String(settings.password));
-}
-
-void initSettings(String configVersion, String ssid, String password, struct configSettings_t& settings)
-{
-    configVersion.toCharArray(settings.configVersion, 15);
-
-    ssid.toCharArray(settings.ssid, 31);
-
-    password.toCharArray(settings.password, 15);
-}
 
 void setup() 
 {
   Serial.begin(115200);
 
   // Prepare the EEPROM Area on the flash
-  EEPROM.begin(64);
+  EEPROM.begin(1024);
 
-  Serial.println("Loading configuration settings ...");
-  EEPROM.get(0, settings);
-  showSettings(settings);
+  loadConfigSettings(settings);
 
-  if(strcmp(settings.configVersion, CONFIG_VERSION) != 0)
-  {
-    Serial.println("Updating configuration settings ...");
-    initSettings(CONFIG_VERSION, DEFAULT_AP_NAME, DEFAULT_AP_PW, settings);
-    
-    EEPROM.put(0, settings);
-    EEPROM.commit();
-  }  
+  initServer();
 
-/*
-  // Setting up access point
-  Serial.print("Setting up Access Point …");
-  WiFi.softAP(settings.ssid, settings.password);
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
+  
 
-  server.begin();
-*/
+
+  // Setting up the lighting control loop on the core 0 with priority 1
+  xTaskCreatePinnedToCore(
+                    lightingLoop,   /* Task function. */
+                    "LightingLoop", /* name of task. */
+                    10000,          /* Stack size of task */
+                    NULL,           /* parameter of the task */
+                    1,              /* priority of the task */
+                    NULL,           /* Task handle to keep track of created task */
+                    0);             /* pin task to core 0 */                  
+  delay(500);  
+
+  // Setting up the admin loop on the core 1 with priority 1
+  xTaskCreatePinnedToCore(
+                    adminLoop,      /* Task function. */
+                    "AdminLoop",    /* name of task. */
+                    10000,          /* Stack size of task */
+                    NULL,           /* parameter of the task */
+                    1,              /* priority of the task */
+                    NULL,           /* Task handle to keep track of created task */
+                    1);             /* pin task to core 0 */                  
+  delay(500);  
+
+
 }
 
+void lightingLoop( void * parameter) {
+  for(;;) {
+    //Serial.print("Control loop on core "); Serial.println(xPortGetCoreID());
+    delay(500);
+  }
+}
+
+void adminLoop( void * parameter) {
+  for(;;) {
+    //Serial.print("Admin loop on core "); Serial.println(xPortGetCoreID());
+    delay(500);
+
+  }
+}
+
+
+
 void loop() {
+  // We don't use this default loop, so we send it to a long sleep everytime it's called. 
+  delay(3600000);
+  
 /* 
   WiFiClient client = server.available();   // Listen for incoming clients
 
