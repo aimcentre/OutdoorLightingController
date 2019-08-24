@@ -39,6 +39,7 @@ void loadConfigSettings(configSettings_t& settings)
 
     Serial.println("New configuration settings:");
     showSettings(settings);
+    
   } // END: if(strcmp(settings.configVersion, CONFIG_VERSION) != 0)
 }
 
@@ -49,13 +50,31 @@ void showSettings(configSettings_t& settings)
   Serial.println("Config version: " + String(settings.configVersion));
   
   Serial.println("Access Point SSID: " + String(settings.accessPointSsid));
-  Serial.println("Access Point Password: " + String(settings.accessPointPassword));
+  if(DEBUG_DISPLAY_CUSTOM_PASSWORDS || strcmp(settings.accessPointPassword, DEFAULT_AP_PW) == 0)
+  {
+    Serial.println("Access Point Password: " + String(settings.accessPointPassword));
+  }
+  else
+  {
+    if(strlen(settings.accessPointPassword) > 0)
+      Serial.println("Access Point Password: <hidden>");
+    else
+      Serial.println("Access Point Password: no password set");
+  } 
+  
   
   Serial.println("WiFi SSID: " + String(settings.wifiSsid));
-  if(strlen(settings.wifiPassword) > 0)
-    Serial.println("WiFi Password: ********");
+  if(DEBUG_DISPLAY_CUSTOM_PASSWORDS)
+  {
+    Serial.println("WiFi Password: " + String(settings.wifiPassword));
+  }
   else
-    Serial.println("WiFi Password:");
+  {
+    if(strlen(settings.wifiPassword) > 0)
+      Serial.println("WiFi Password: <hidden>");
+    else
+      Serial.println("WiFi Password: no password set");
+  }
   
   Serial.println();
 }
