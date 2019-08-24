@@ -7,12 +7,13 @@
 #include <EEPROM.h>
 #include <ESPAsyncWebServer.h>
 
-#include "configParams.h"
+#include "systemConfigParams.h"
+#include "lightingConfigParams.h"
 
 configSettings_t settings;
 AsyncWebServer server(80);
 
-bool WifiInitialized = false;
+bool wifiInitialized = false;
 
 void setup() 
 {
@@ -29,6 +30,10 @@ void setup()
 
   // Initializing the Access Point Hotspot and the system-configuration server
   initConfigServer();
+
+  // Initializing timer interrupt system used for lighting control
+  initLightingControlSystem();
+  
 
  // Setting up lighting control routines to be executed on the core 0
   xTaskCreatePinnedToCore(
