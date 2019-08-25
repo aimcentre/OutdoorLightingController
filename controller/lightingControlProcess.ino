@@ -1,5 +1,6 @@
 
-void IRAM_ATTR onTimer(){
+void IRAM_ATTR onTimer()
+{
   portENTER_CRITICAL(&timerMux);
   ++isrCounter;
   portEXIT_CRITICAL(&timerMux);
@@ -8,14 +9,67 @@ void IRAM_ATTR onTimer(){
   xSemaphoreGiveFromISR(timerSemaphore, NULL);
 }
 
+void IRAM_ATTR onMotionA()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockA = millis();
+  
+  lampStateTimers.timerA = settings.lampOnTimeMinutes;
+  
+  portEXIT_CRITICAL(&timerMux);
+}
+
+void IRAM_ATTR onMotionB()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockB = millis();
+
+  lampStateTimers.timerB = settings.lampOnTimeMinutes;
+  
+  portEXIT_CRITICAL(&timerMux);
+}
+
+void IRAM_ATTR onMotionC()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockC = millis();
+  
+  lampStateTimers.timerC = settings.lampOnTimeMinutes;
+  
+  portEXIT_CRITICAL(&timerMux);
+}
+
+void IRAM_ATTR onMotionD()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockD = millis();
+
+  lampStateTimers.timerA = settings.lampOnTimeMinutes;
+  lampStateTimers.timerB = settings.lampOnTimeMinutes;
+  
+  portEXIT_CRITICAL(&timerMux);
+}
+
+void IRAM_ATTR onMotionE()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockE = millis();
+
+  lampStateTimers.timerA = settings.lampOnTimeMinutes;
+  lampStateTimers.timerB = settings.lampOnTimeMinutes;
+  lampStateTimers.timerC = settings.lampOnTimeMinutes;
+
+  portEXIT_CRITICAL(&timerMux);
+}
+
 void initLightingControlSystem()
 {
   // Initialzing pin modes
-  pinMode(MOTION_A, INPUT_PULLUP);
-  pinMode(MOTION_B, INPUT_PULLUP);
-  pinMode(MOTION_C, INPUT_PULLUP);
-  pinMode(MOTION_D, INPUT_PULLUP);
-  pinMode(MOTION_E, INPUT_PULLUP);
+  pinMode(MOTION_A, INPUT);
+  pinMode(MOTION_B, INPUT);
+  pinMode(MOTION_C, INPUT);
+  pinMode(MOTION_D, INPUT);
+  pinMode(MOTION_E, INPUT);
   pinMode(DAYLIGHT_SENSOR, INPUT_PULLUP);
   pinMode(WIFI_RESET, INPUT_PULLUP);
 
@@ -44,6 +98,13 @@ void initLightingControlSystem()
 
   // Start an alarm
   timerAlarmEnable(timer);
+
+  // Setting up motion-sensor interrupts
+  attachInterrupt(MOTION_A, &onMotionA, RISING);
+  attachInterrupt(MOTION_B, &onMotionB, RISING);
+  attachInterrupt(MOTION_C, &onMotionC, RISING);
+  attachInterrupt(MOTION_D, &onMotionD, RISING);
+  attachInterrupt(MOTION_E, &onMotionE, RISING);
 }
 
 void lightingControlProcess(void * parameter)
@@ -73,11 +134,15 @@ void lightingControlProcess(void * parameter)
       int stateB = isNight && lampStates.timerB > 0;
       int stateC = isNight && lampStates.timerC > 0;
 
+      Serial.printf("Is Night: %s", isNight ? "YES" : "NO");
+      Serial.println();
+
       if(stateA != lampStates.stateA || stateB != lampStates.stateB || stateC != lampStates.stateC)
       {
         digitalWrite(LAMP_A, stateA ? ON : OFF);
         digitalWrite(LAMP_B, stateB ? ON : OFF);
-        digitalWrite(LAMP_B, stateC ? ON : OFF);
+        //digitalWrite(LAMP_C, stateC ? ON : OFF);
+        digitalWrite(LAMP_C, stateC ? OFF : ON);
 
         // The following code which sets the states in lampStateTimers may not needs to be protected with a mutex because these
         // states are only set by the following code segment. However, I protected it anyways.

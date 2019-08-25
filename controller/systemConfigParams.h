@@ -22,6 +22,9 @@ struct configSettings_t
 
   char wifiSsid[SSID_MAX_LENGTH];
   char wifiPassword[SSID_PASSWORD_MAX_LENGTH];
+
+  bool testMode;
+  unsigned int lampOnTimeMinutes;
 };
 
 // Default Access Point name and the password
@@ -30,3 +33,6 @@ struct configSettings_t
 
 // Set the following directive to true to display passwords on the debugger
 #define DEBUG_DISPLAY_CUSTOM_PASSWORDS false
+
+// Default on time for lamps in minutes
+#define DEFAULT_LAMP_ON_TIME 5

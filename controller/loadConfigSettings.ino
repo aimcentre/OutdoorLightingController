@@ -32,6 +32,9 @@ void loadConfigSettings(configSettings_t& settings)
 
     settings.wifiSsid[0] = 0; //Setting the WiFi SSID to null
     settings.wifiPassword[0] = 0; //Setting the WiFi Password to null
+
+    settings.testMode = true;
+    settings.lampOnTimeMinutes = DEFAULT_LAMP_ON_TIME;
     
     //Saving the updated configuration structure in the EEPROM.
     EEPROM.put(0, settings);

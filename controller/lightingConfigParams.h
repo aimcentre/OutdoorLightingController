@@ -1,23 +1,23 @@
 // Sensor GPIO pin assignments
-#define MOTION_A 12
-#define MOTION_B 13
+#define MOTION_A 17
+#define MOTION_B 16
 #define MOTION_C 14
-#define MOTION_D 15
-#define MOTION_E 16
-#define DAYLIGHT_SENSOR 17
+#define MOTION_D 12
+#define MOTION_E 13
+#define DAYLIGHT_SENSOR 15
 #define WIFI_RESET 18
 
 // Lamp-segment GPIO pin assignments
 #define LAMP_A 22
 #define LAMP_B 23
-#define LAMP_C 25
+#define LAMP_C 32
 
 // Lamp on/off output level 
 #define ON HIGH
 #define OFF LOW
 
 // Day-time output level of the daylight sensor
-#define DAYTIME LOW 
+#define DAYTIME HIGH 
 
 struct sensorState_t
 {
@@ -46,4 +46,4 @@ volatile SemaphoreHandle_t timerSemaphore;
 volatile int isrCounter = 0;
 
 volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0};
-volatile lampState_t lampStateTimers{10, 5, 20};
+volatile lampState_t lampStateTimers{0, 0, 0, false, false, false};
