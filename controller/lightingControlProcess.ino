@@ -65,12 +65,13 @@ void IRAM_ATTR onMotionE()
 void initLightingControlSystem()
 {
   // Initialzing pin modes
-  pinMode(MOTION_A, INPUT);
-  pinMode(MOTION_B, INPUT);
-  pinMode(MOTION_C, INPUT);
-  pinMode(MOTION_D, INPUT);
-  pinMode(MOTION_E, INPUT);
-  pinMode(DAYLIGHT_SENSOR, INPUT_PULLUP);
+  pinMode(MOTION_A, INPUT_PULLDOWN);
+  pinMode(MOTION_A, INPUT_PULLDOWN);
+  pinMode(MOTION_B, INPUT_PULLDOWN);
+  pinMode(MOTION_C, INPUT_PULLDOWN);
+  pinMode(MOTION_D, INPUT_PULLDOWN);
+  pinMode(MOTION_E, INPUT_PULLDOWN);
+  pinMode(DAYLIGHT_SENSOR, INPUT_PULLDOWN);
   pinMode(WIFI_RESET, INPUT_PULLUP);
 
   pinMode(LAMP_A, OUTPUT);
@@ -141,8 +142,7 @@ void lightingControlProcess(void * parameter)
       {
         digitalWrite(LAMP_A, stateA ? ON : OFF);
         digitalWrite(LAMP_B, stateB ? ON : OFF);
-        //digitalWrite(LAMP_C, stateC ? ON : OFF);
-        digitalWrite(LAMP_C, stateC ? OFF : ON);
+        digitalWrite(LAMP_C, stateC ? ON : OFF);
 
         // The following code which sets the states in lampStateTimers may not needs to be protected with a mutex because these
         // states are only set by the following code segment. However, I protected it anyways.

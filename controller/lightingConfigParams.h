@@ -1,23 +1,26 @@
 // Sensor GPIO pin assignments
-#define MOTION_A 17
-#define MOTION_B 16
-#define MOTION_C 14
-#define MOTION_D 12
-#define MOTION_E 13
-#define DAYLIGHT_SENSOR 15
-#define WIFI_RESET 18
+// References: https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
+//             https://wiki.keyestudio.com/KS0413_keyestudio_ESP32_Core_Board
+
+#define MOTION_A 13
+#define MOTION_B 14
+#define MOTION_C 15
+#define MOTION_D 16
+#define MOTION_E 17
+#define DAYLIGHT_SENSOR 18
+#define WIFI_RESET 19
 
 // Lamp-segment GPIO pin assignments
-#define LAMP_A 22
-#define LAMP_B 23
-#define LAMP_C 32
+#define LAMP_A 25
+#define LAMP_B 26
+#define LAMP_C 27
 
 // Lamp on/off output level 
 #define ON HIGH
 #define OFF LOW
 
 // Day-time output level of the daylight sensor
-#define DAYTIME HIGH 
+#define DAYTIME LOW 
 
 struct sensorState_t
 {
