@@ -51,65 +51,80 @@ void IRAM_ATTR onMotionC()
   portEXIT_CRITICAL(&timerMux);
 }
 
-void IRAM_ATTR onMotionDEF()
+void IRAM_ATTR onMotionD()
 {
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockD = millis();
 
   // Turnning on the lamp segment C immediately for the default duration
-  turnLampSegmentOn(&lampStateB, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
+
+  // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
+  scheduleLampSegmentOn(&lampStateB, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
 
+void IRAM_ATTR onMotionEF()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockD = millis();
+
+  // Turnning on the lamp segment C immediately for the default duration
+  turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
+  
+  portEXIT_CRITICAL(&timerMux);
+}
 
 void lightingControlProcess(void * parameter)
 {
   sensorState_t sensorTriggers;
-  lampState_tx lampStates;
-  int isr_counter;
+  lampState_t segA, segB, segC;
+  bool prevOnA = false, prevOnB = false, prevOnC = false;
    
   for(;;)
   {
     if (xSemaphoreTake(timerSemaphore, 0) == pdTRUE)
     {
-      // Locking the timer mutex, decrementing and coying positive lamp-state timer values , and releasing the mutex
+      // Locking the timer mutex, decrementing and coying lamp-state timer values, and releasing the mutex
       portENTER_CRITICAL(&timerMux);
-      lampStates.timerA = lampStateTimers.timerA > 0 ? --lampStateTimers.timerA : 0;
-      lampStates.timerB = lampStateTimers.timerB > 0 ? --lampStateTimers.timerB : 0;
-      lampStates.timerC = lampStateTimers.timerC > 0 ? --lampStateTimers.timerC : 0;
 
-      lampStates.stateA = lampStateTimers.stateA;
-      lampStates.stateB = lampStateTimers.stateB;
-      lampStates.stateC = lampStateTimers.stateC;
+      segA.offset = lampStateA.offset > 0 ? lampStateA.offset-- : 0;
+      if(segA.offset == 0)
+        segA.period = lampStateA.period > 0 ? lampStateA.period-- : 0;
+
+      segB.offset = lampStateB.offset > 0 ? lampStateB.offset-- : 0;
+      if(segB.offset == 0)
+        segB.period = lampStateB.period > 0 ? lampStateB.period-- : 0;
+      
+      segC.offset = lampStateC.offset > 0 ? lampStateC.offset-- : 0;
+      if(segC.offset == 0)
+        segC.period = lampStateC.period > 0 ? lampStateC.period-- : 0;
+
       portEXIT_CRITICAL(&timerMux);
 
       // Checking the new states of lamp segments depending on whether the corresponding timer values are positive or zero
       bool isNight = digitalRead(DAYLIGHT_SENSOR) != DAYTIME;
-      int stateA = isNight && lampStates.timerA > 0;
-      int stateB = isNight && lampStates.timerB > 0;
-      int stateC = isNight && lampStates.timerC > 0;
+      bool turnOnA = (settings.testMode || isNight) && segA.offset == 0 && segA.period > 0;
+      bool turnOnB = (settings.testMode || isNight) && segB.offset == 0 && segB.period > 0;
+      bool turnOnC = (settings.testMode || isNight) && segC.offset == 0 && segC.period > 0;
 
-      Serial.printf("Is Night: %s", isNight ? "YES" : "NO");
-      Serial.println();
-
-      if(stateA != lampStates.stateA || stateB != lampStates.stateB || stateC != lampStates.stateC)
+      if(prevOnA != turnOnA || prevOnB != turnOnB || prevOnC != turnOnC)
       {
-        digitalWrite(LAMP_A, stateA ? ON : OFF);
-        digitalWrite(LAMP_B, stateB ? ON : OFF);
-        digitalWrite(LAMP_C, stateC ? ON : OFF);
+        digitalWrite(LAMP_A, turnOnA ? ON : OFF);
+        digitalWrite(LAMP_B, turnOnB ? ON : OFF);
+        digitalWrite(LAMP_C, turnOnC ? ON : OFF);
 
-        // The following code which sets the states in lampStateTimers may not needs to be protected with a mutex because these
-        // states are only set by the following code segment. However, I protected it anyways.
-        portENTER_CRITICAL(&timerMux);
-        lampStateTimers.stateA = stateA;
-        lampStateTimers.stateB = stateB;
-        lampStateTimers.stateC = stateC;       
-        portEXIT_CRITICAL(&timerMux);
-       
-        Serial.printf("Segment A: %s, Segment B: %s, Segment C: %s", stateA ? "ON" : "OFF", stateB ? "ON" : "OFF", stateC ? "ON" : "OFF");
-        Serial.println();
+        if(settings.testMode)
+        {
+          Serial.printf("Segment A: %s, Segment B: %s, Segment C: %s", turnOnA ? "ON" : "OFF", turnOnB ? "ON" : "OFF", turnOnC ? "ON" : "OFF");
+          Serial.println();
+        }
       }
+
+      prevOnA = turnOnA;
+      prevOnB = turnOnB;
+      prevOnC = turnOnC;
     }
     else
       delay(10);
@@ -157,12 +172,12 @@ void initLightingControlSystem()
   timerAlarmEnable(timer);
 
   // Setting up motion-sensor interrupts
-  attachInterrupt(MOTION_A, &onMotionA, RISING);
-  attachInterrupt(MOTION_B, &onMotionB, RISING);
-  attachInterrupt(MOTION_C, &onMotionC, RISING);
-  attachInterrupt(MOTION_D, &onMotionDEF, RISING);
-  attachInterrupt(MOTION_E, &onMotionDEF, RISING);
-  attachInterrupt(MOTION_F, &onMotionDEF, RISING);
+  attachInterrupt(MOTION_A, &onMotionA,   FALLING);
+  attachInterrupt(MOTION_B, &onMotionB,   FALLING);
+  attachInterrupt(MOTION_C, &onMotionC,   FALLING);
+  attachInterrupt(MOTION_D, &onMotionD, FALLING);
+  attachInterrupt(MOTION_E, &onMotionEF, FALLING);
+  attachInterrupt(MOTION_F, &onMotionEF, FALLING);
 }
 
 void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period)

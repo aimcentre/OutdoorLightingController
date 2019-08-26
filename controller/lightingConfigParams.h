@@ -39,17 +39,6 @@ struct lampState_t
   unsigned int period;
 };
 
-struct lampState_tx
-{
-  int timerA;
-  int timerB;
-  int timerC;
-
-  bool stateA;
-  bool stateB;
-  bool stateC;
-};
-
 // Lighting control data structures and interrupt timer variables
 hw_timer_t * timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
@@ -57,7 +46,6 @@ volatile SemaphoreHandle_t timerSemaphore;
 volatile int isrCounter = 0;
 
 volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
-volatile lampState_tx lampStateTimers{0, 0, 0, false, false, false};
 volatile lampState_t lampStateA{0,0};
 volatile lampState_t lampStateB{0,0};
 volatile lampState_t lampStateC{0,0};

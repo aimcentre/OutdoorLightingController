@@ -38,7 +38,7 @@ struct configSettings_t
 #define DEBUG_DISPLAY_CUSTOM_PASSWORDS false
 
 // Default on time for lamps in seconds
-#define REG_LAMP_ON_TIME 300
-#define AUX_LAMP_ON_TIME 60
+#define REG_LAMP_ON_TIME 10
+#define AUX_LAMP_ON_TIME 3
 
 #define INTER_SEG_DELAY 5
