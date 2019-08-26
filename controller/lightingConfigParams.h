@@ -7,8 +7,9 @@
 #define MOTION_C 15
 #define MOTION_D 16
 #define MOTION_E 17
-#define DAYLIGHT_SENSOR 18
-#define WIFI_RESET 19
+#define MOTION_F 18
+#define DAYLIGHT_SENSOR 19
+#define WIFI_RESET 21
 
 // Lamp-segment GPIO pin assignments
 #define LAMP_A 25
@@ -29,9 +30,16 @@ struct sensorState_t
   unsigned long clockC;
   unsigned long clockD;
   unsigned long clockE;
+  unsigned long clockF;
 };
 
 struct lampState_t
+{
+  unsigned int offset;
+  unsigned int period;
+};
+
+struct lampState_tx
 {
   int timerA;
   int timerB;
@@ -48,5 +56,8 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 volatile SemaphoreHandle_t timerSemaphore;
 volatile int isrCounter = 0;
 
-volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0};
-volatile lampState_t lampStateTimers{0, 0, 0, false, false, false};
+volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
+volatile lampState_tx lampStateTimers{0, 0, 0, false, false, false};
+volatile lampState_t lampStateA{0,0};
+volatile lampState_t lampStateB{0,0};
+volatile lampState_t lampStateC{0,0};

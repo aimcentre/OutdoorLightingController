@@ -4,7 +4,7 @@
 //    If you change anything in this file, please make sure to change the value of the following CONFIG_VERSION constant to
 //    something other than what is already stored for it in the ESP32 board. Otherwise, the changes will not be saved on the board.
 //    To find what CONFIG_VERSION is in the board, please reset the board while monitoring its serial debugger output.
-#define CONFIG_VERSION 1
+#define CONFIG_VERSION 2
 
 // Maximum lengths of string values used for the fields of the configSettings_t structure. These maximum lenghts
 // include the space for the null termination characters, meaning that the actual readable length of the string will
@@ -24,7 +24,10 @@ struct configSettings_t
   char wifiPassword[SSID_PASSWORD_MAX_LENGTH];
 
   bool testMode;
-  unsigned int lampOnTimeMinutes;
+  unsigned int regularLampOnTime;
+  unsigned int auxiliaryLampOnTime;
+
+  unsigned int interSegmentDelay;
 };
 
 // Default Access Point name and the password
@@ -34,5 +37,8 @@ struct configSettings_t
 // Set the following directive to true to display passwords on the debugger
 #define DEBUG_DISPLAY_CUSTOM_PASSWORDS false
 
-// Default on time for lamps in minutes
-#define DEFAULT_LAMP_ON_TIME 5
+// Default on time for lamps in seconds
+#define REG_LAMP_ON_TIME 300
+#define AUX_LAMP_ON_TIME 60
+
+#define INTER_SEG_DELAY 5

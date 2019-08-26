@@ -1,3 +1,5 @@
+void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period);
+void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int period);
 
 void IRAM_ATTR onTimer()
 {
@@ -14,8 +16,12 @@ void IRAM_ATTR onMotionA()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockA = millis();
   
-  lampStateTimers.timerA = settings.lampOnTimeMinutes;
-  
+  // Turnning on the lamp segment A immediately for the default duration
+  turnLampSegmentOn(&lampStateA, settings.regularLampOnTime);
+
+  // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
+  scheduleLampSegmentOn(&lampStateB, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+
   portEXIT_CRITICAL(&timerMux);
 }
 
@@ -24,7 +30,9 @@ void IRAM_ATTR onMotionB()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockB = millis();
 
-  lampStateTimers.timerB = settings.lampOnTimeMinutes;
+  // Turnning on the lamp segments A and B immediately for the default duration
+  turnLampSegmentOn(&lampStateA, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampStateB, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -34,84 +42,31 @@ void IRAM_ATTR onMotionC()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockC = millis();
   
-  lampStateTimers.timerC = settings.lampOnTimeMinutes;
+  // Turnning on the lamp segment B immediately for the default duration
+  turnLampSegmentOn(&lampStateB, settings.regularLampOnTime);
+
+  // Scheduling lamp segment A to turn on for the auxiliary interval after the inter-segment delay
+  scheduleLampSegmentOn(&lampStateA, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
 
-void IRAM_ATTR onMotionD()
+void IRAM_ATTR onMotionDEF()
 {
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockD = millis();
 
-  lampStateTimers.timerA = settings.lampOnTimeMinutes;
-  lampStateTimers.timerB = settings.lampOnTimeMinutes;
+  // Turnning on the lamp segment C immediately for the default duration
+  turnLampSegmentOn(&lampStateB, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
 
-void IRAM_ATTR onMotionE()
-{
-  portENTER_CRITICAL(&timerMux);
-  sensorTriggerTimestamps.clockE = millis();
-
-  lampStateTimers.timerA = settings.lampOnTimeMinutes;
-  lampStateTimers.timerB = settings.lampOnTimeMinutes;
-  lampStateTimers.timerC = settings.lampOnTimeMinutes;
-
-  portEXIT_CRITICAL(&timerMux);
-}
-
-void initLightingControlSystem()
-{
-  // Initialzing pin modes
-  pinMode(MOTION_A, INPUT_PULLDOWN);
-  pinMode(MOTION_A, INPUT_PULLDOWN);
-  pinMode(MOTION_B, INPUT_PULLDOWN);
-  pinMode(MOTION_C, INPUT_PULLDOWN);
-  pinMode(MOTION_D, INPUT_PULLDOWN);
-  pinMode(MOTION_E, INPUT_PULLDOWN);
-  pinMode(DAYLIGHT_SENSOR, INPUT_PULLDOWN);
-  pinMode(WIFI_RESET, INPUT_PULLUP);
-
-  pinMode(LAMP_A, OUTPUT);
-  pinMode(LAMP_B, OUTPUT);
-  pinMode(LAMP_C, OUTPUT);
-
-  digitalWrite(LAMP_A,  OFF);
-  digitalWrite(LAMP_B,  OFF);
-  digitalWrite(LAMP_C,  OFF);
-  
-  // Create semaphore to inform us when the timer has fired
-  timerSemaphore = xSemaphoreCreateBinary(); 
-
-  // Use 1st timer of 4 (counted from zero).
-  // Set 80 divider for prescaler (see ESP32 Technical Reference Manual for more
-  // info).
-  timer = timerBegin(0, 80, true);
-
-  // Attach onTimer function to our timer.
-  timerAttachInterrupt(timer, &onTimer, true);
-
-  // Set alarm to call onTimer function every second (value in microseconds).
-  // Repeat the alarm (third parameter)
-  timerAlarmWrite(timer, 1000000, true);
-
-  // Start an alarm
-  timerAlarmEnable(timer);
-
-  // Setting up motion-sensor interrupts
-  attachInterrupt(MOTION_A, &onMotionA, RISING);
-  attachInterrupt(MOTION_B, &onMotionB, RISING);
-  attachInterrupt(MOTION_C, &onMotionC, RISING);
-  attachInterrupt(MOTION_D, &onMotionD, RISING);
-  attachInterrupt(MOTION_E, &onMotionE, RISING);
-}
 
 void lightingControlProcess(void * parameter)
 {
   sensorState_t sensorTriggers;
-  lampState_t lampStates;
+  lampState_tx lampStates;
   int isr_counter;
    
   for(;;)
@@ -160,4 +115,96 @@ void lightingControlProcess(void * parameter)
       delay(10);
   }
   
+}
+
+void initLightingControlSystem()
+{
+  // Initialzing pin modes
+  pinMode(MOTION_A, INPUT_PULLDOWN);
+  pinMode(MOTION_A, INPUT_PULLDOWN);
+  pinMode(MOTION_B, INPUT_PULLDOWN);
+  pinMode(MOTION_C, INPUT_PULLDOWN);
+  pinMode(MOTION_D, INPUT_PULLDOWN);
+  pinMode(MOTION_E, INPUT_PULLDOWN);
+  pinMode(MOTION_F, INPUT_PULLDOWN);
+  pinMode(DAYLIGHT_SENSOR, INPUT_PULLDOWN);
+  pinMode(WIFI_RESET, INPUT_PULLUP);
+
+  pinMode(LAMP_A, OUTPUT);
+  pinMode(LAMP_B, OUTPUT);
+  pinMode(LAMP_C, OUTPUT);
+
+  digitalWrite(LAMP_A,  OFF);
+  digitalWrite(LAMP_B,  OFF);
+  digitalWrite(LAMP_C,  OFF);
+  
+  // Create semaphore to inform us when the timer has fired
+  timerSemaphore = xSemaphoreCreateBinary(); 
+
+  // Use 1st timer of 4 (counted from zero).
+  // Set 80 divider for prescaler (see ESP32 Technical Reference Manual for more
+  // info).
+  timer = timerBegin(0, 80, true);
+
+  // Attach onTimer function to our timer.
+  timerAttachInterrupt(timer, &onTimer, true);
+
+  // Set alarm to call onTimer function every second (value in microseconds).
+  // Repeat the alarm (third parameter)
+  timerAlarmWrite(timer, 1000000, true);
+
+  // Start an alarm
+  timerAlarmEnable(timer);
+
+  // Setting up motion-sensor interrupts
+  attachInterrupt(MOTION_A, &onMotionA, RISING);
+  attachInterrupt(MOTION_B, &onMotionB, RISING);
+  attachInterrupt(MOTION_C, &onMotionC, RISING);
+  attachInterrupt(MOTION_D, &onMotionDEF, RISING);
+  attachInterrupt(MOTION_E, &onMotionDEF, RISING);
+  attachInterrupt(MOTION_F, &onMotionDEF, RISING);
+}
+
+void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period)
+{
+  if(lampState->period == 0)
+  {
+    // Segment is currently off, so set it to turn on for the given period after the given delay.
+    lampState->offset = offset;
+    lampState->period = period;
+  }
+  else if(lampState->offset == 0)
+  {
+    // Segment is currently turned on. Keep it turned on for current period or the given offset+period, whichever is longer
+    unsigned int t = lampState->period;
+    lampState->period = max (t, offset + period);    
+  }
+  else
+  {
+    // The segment is scheduled to be turned on after some delay. Turn it on after that delay or the given offset, whichever is smaller,
+    // and keep it on past the scheduled period or the the given offset+period, whichever is larger
+    int time_to_turn_off = max(lampState->offset + lampState->period, offset + period);
+    unsigned int t = lampState->offset;
+    lampState->offset = min(t, offset);
+    lampState->period = time_to_turn_off - lampState->offset;
+  } 
+}
+
+void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int period)
+{
+  if(lampState->period == 0)
+  {
+    // The lamp is already off. Turn it on immediately
+    lampState->offset = 0;
+    lampState->period = period;
+  }
+  else
+  {
+    // The lamp is already on or scheduled to be on. Turn it on immediately but keep it for the turn-on duration or 
+    // the end of the scheduled turn-on period, whichever is longer
+    unsigned int t = lampState->offset + lampState->period;
+    int time_to_turn_off = max(t, period);
+    lampState->offset = 0;
+    lampState->period = time_to_turn_off;
+  }
 }
