@@ -38,8 +38,11 @@
 #define ON HIGH
 #define OFF LOW
 
-// Day-time output level of the daylight sensor
-#define DAYTIME LOW 
+// Day-light sensor threshold. The lamps will be turned on only when the 
+// day-light sendor value is below this threshold.
+#define DAYLIGHT_THRESHOLD 2000 
+
+#define DAYLIGHT_SENSOR AIN_1
 
 // Data structure to keep track of when each motion sensor was triggered 
 struct sensorState_t
@@ -62,11 +65,14 @@ struct lampState_t
 hw_timer_t * timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 volatile SemaphoreHandle_t timerSemaphore;
-volatile int isrCounter = 0;
 
 volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
 volatile lampState_t lampStateA{0,0};
 volatile lampState_t lampStateB{0,0};
 volatile lampState_t lampStateC{0,0};
+volatile lampState_t lampStateD{0,0};
 
-// Status LED parameters
+volatile unsigned long accessPointPasswordResetBtnPressedTime = 0;
+volatile bool accessPointPasswordResetComplete = false;
+
+ 

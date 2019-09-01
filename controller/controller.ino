@@ -45,19 +45,33 @@ void setup()
                     NULL,           /* Task handle to keep track of created task */
                     0);             /* core */          
 
-  // Setting up reporting-processes and other health-check routines to be executed on the core 1
+  // Setting up reporting process to be executed on the core 1
   xTaskCreatePinnedToCore(
-                    reportingProcess,   /* Task function. */
+                    systemAdminProcess,   /* Task function. */
+                    "AdminProcess", /* name of task. */
+                    10000,          /* Stack size of task */
+                    NULL,           /* parameter of the task */
+                    1,              /* priority of the task */
+                    NULL,           /* Task handle to keep track of created task */
+                    1);             /* core */
+
+  // Setting up health-check routine to be executed on the core 1
+  xTaskCreatePinnedToCore(
+                    systemMonitorProcess,   /* Task function. */
                     "AdminProcess", /* name of task. */
                     10000,          /* Stack size of task */
                     NULL,           /* parameter of the task */
                     1,              /* priority of the task */
                     NULL,           /* Task handle to keep track of created task */
                     1);             /* core */                  
+                                      
 }
 
 void loop() {
   // We don't use this default loop. We have it here simply because it's necessary for the Arduino framework.
+  delay(10000);
+  
+  /*
   digitalWrite(STATUS_R, true);
   digitalWrite(STATUS_G, false);
   digitalWrite(STATUS_B, false);
@@ -86,5 +100,6 @@ void loop() {
   digitalWrite(STATUS_R, true);
   digitalWrite(STATUS_B, true);
   delay(500);
+  */
   
 }

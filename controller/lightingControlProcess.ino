@@ -2,11 +2,7 @@ void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned i
 void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int period);
 
 void IRAM_ATTR onTimer()
-{
-  portENTER_CRITICAL(&timerMux);
-  ++isrCounter;
-  portEXIT_CRITICAL(&timerMux);
-  
+{  
   // Enable timer semaphore so that the main lighting-control loop is unlocked
   xSemaphoreGiveFromISR(timerSemaphore, NULL);
 }
@@ -59,6 +55,9 @@ void IRAM_ATTR onMotionD()
   // Turnning on the lamp segment C immediately for the default duration
   turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
 
+  // Turnning on the lamp segment D immediately for the auxiliary interval
+  turnLampSegmentOn(&lampStateD, settings.auxiliaryLampOnTime);
+
   // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
   scheduleLampSegmentOn(&lampStateB, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
   
@@ -70,8 +69,11 @@ void IRAM_ATTR onMotionE()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockE = millis();
 
-  // Turnning on the lamp segment C immediately for the default duration
-  turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
+  // Turnning on the lamp segment D immediately for the default duration
+  turnLampSegmentOn(&lampStateD, settings.regularLampOnTime);
+
+  // Turnning on the lamp segment C immediately for the auxiliary interval
+  turnLampSegmentOn(&lampStateC, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -81,9 +83,16 @@ void IRAM_ATTR onMotionF()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockF = millis();
 
-  // Turnning on the lamp segment C immediately for the default duration
-  turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
+  // Turnning on the lamp segment D immediately for the default duration
+  turnLampSegmentOn(&lampStateD, settings.regularLampOnTime);
   
+  portEXIT_CRITICAL(&timerMux);
+}
+
+void IRAM_ATTR onAccessPointPasswordResetBtnPressed()
+{
+  portENTER_CRITICAL(&timerMux);
+  accessPointPasswordResetBtnPressedTime = millis();
   portEXIT_CRITICAL(&timerMux);
 }
 
@@ -115,7 +124,8 @@ void lightingControlProcess(void * parameter)
       portEXIT_CRITICAL(&timerMux);
 
       // Checking the new states of lamp segments depending on whether the corresponding timer values are positive or zero
-      bool isNight = digitalRead(DAYLIGHT_SENSOR) != DAYTIME;
+      int dayLightLevel = analogRead(DAYLIGHT_SENSOR);
+      bool isNight = dayLightLevel < settings.dayLightThreshold;
       bool turnOnA = (settings.testMode || isNight) && segA.offset == 0 && segA.period > 0;
       bool turnOnB = (settings.testMode || isNight) && segB.offset == 0 && segB.period > 0;
       bool turnOnC = (settings.testMode || isNight) && segC.offset == 0 && segC.period > 0;
@@ -181,8 +191,7 @@ void initLightingControlSystem()
   timerSemaphore = xSemaphoreCreateBinary(); 
 
   // Use 1st timer of 4 (counted from zero).
-  // Set 80 divider for prescaler (see ESP32 Technical Reference Manual for more
-  // info).
+  // Set 80 divider for prescaler, creating a 1MHz timer tick (see ESP32 Technical Reference Manual for more info).
   timer = timerBegin(0, 80, true);
 
   // Attach onTimer function to our timer.
@@ -202,6 +211,9 @@ void initLightingControlSystem()
   attachInterrupt(MOTION_D, &onMotionD, FALLING);
   attachInterrupt(MOTION_E, &onMotionE, FALLING);
   attachInterrupt(MOTION_F, &onMotionF, FALLING);
+
+  // Setting up Access Point password-reset inturrupt
+  attachInterrupt(WIFI_RESET, &onAccessPointPasswordResetBtnPressed, FALLING);
 }
 
 void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period)
