@@ -65,10 +65,21 @@ void IRAM_ATTR onMotionD()
   portEXIT_CRITICAL(&timerMux);
 }
 
-void IRAM_ATTR onMotionEF()
+void IRAM_ATTR onMotionE()
 {
   portENTER_CRITICAL(&timerMux);
-  sensorTriggerTimestamps.clockD = millis();
+  sensorTriggerTimestamps.clockE = millis();
+
+  // Turnning on the lamp segment C immediately for the default duration
+  turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
+  
+  portEXIT_CRITICAL(&timerMux);
+}
+
+void IRAM_ATTR onMotionF()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockF = millis();
 
   // Turnning on the lamp segment C immediately for the default duration
   turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
@@ -135,15 +146,23 @@ void lightingControlProcess(void * parameter)
 void initLightingControlSystem()
 {
   // Initialzing pin modes
-  pinMode(MOTION_A, INPUT_PULLDOWN);
-  pinMode(MOTION_A, INPUT_PULLDOWN);
-  pinMode(MOTION_B, INPUT_PULLDOWN);
-  pinMode(MOTION_C, INPUT_PULLDOWN);
-  pinMode(MOTION_D, INPUT_PULLDOWN);
-  pinMode(MOTION_E, INPUT_PULLDOWN);
-  pinMode(MOTION_F, INPUT_PULLDOWN);
-  pinMode(DAYLIGHT_SENSOR, INPUT_PULLDOWN);
-  pinMode(WIFI_RESET, INPUT_PULLUP);
+  pinMode(DIN_1, INPUT_PULLDOWN);
+  pinMode(DIN_2, INPUT_PULLDOWN);
+  pinMode(DIN_3, INPUT_PULLDOWN);
+  pinMode(DIN_4, INPUT_PULLDOWN);
+  pinMode(DIN_5, INPUT_PULLDOWN);
+  pinMode(DIN_6, INPUT_PULLDOWN);
+  pinMode(DIN_7, INPUT_PULLDOWN);
+  pinMode(DIN_8, INPUT_PULLDOWN);
+  
+  pinMode(AIN_1, INPUT);
+  pinMode(AIN_2, INPUT);
+
+  pinMode(STATUS_R, OUTPUT);
+  pinMode(STATUS_G, OUTPUT);
+  pinMode(STATUS_B, OUTPUT);
+
+  pinMode(WIFI_RESET, INPUT);
 
   pinMode(LAMP_A, OUTPUT);
   pinMode(LAMP_B, OUTPUT);
@@ -152,6 +171,11 @@ void initLightingControlSystem()
   digitalWrite(LAMP_A,  OFF);
   digitalWrite(LAMP_B,  OFF);
   digitalWrite(LAMP_C,  OFF);
+
+  digitalWrite(STATUS_R,  OFF);
+  digitalWrite(STATUS_G,  OFF);
+  digitalWrite(STATUS_B,  OFF);
+  
   
   // Create semaphore to inform us when the timer has fired
   timerSemaphore = xSemaphoreCreateBinary(); 
@@ -176,8 +200,8 @@ void initLightingControlSystem()
   attachInterrupt(MOTION_B, &onMotionB,   FALLING);
   attachInterrupt(MOTION_C, &onMotionC,   FALLING);
   attachInterrupt(MOTION_D, &onMotionD, FALLING);
-  attachInterrupt(MOTION_E, &onMotionEF, FALLING);
-  attachInterrupt(MOTION_F, &onMotionEF, FALLING);
+  attachInterrupt(MOTION_E, &onMotionE, FALLING);
+  attachInterrupt(MOTION_F, &onMotionF, FALLING);
 }
 
 void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period)

@@ -58,5 +58,33 @@ void setup()
 
 void loop() {
   // We don't use this default loop. We have it here simply because it's necessary for the Arduino framework.
-  delay(10000);
+  digitalWrite(STATUS_R, true);
+  digitalWrite(STATUS_G, false);
+  digitalWrite(STATUS_B, false);
+  delay(500);
+
+  digitalWrite(STATUS_R, false);
+  digitalWrite(STATUS_G, true);
+  digitalWrite(STATUS_B, false);
+  delay(500);
+
+  digitalWrite(STATUS_R, false);
+  digitalWrite(STATUS_G, false);
+  digitalWrite(STATUS_B, true);
+  delay(500);
+
+  digitalWrite(STATUS_R, true);
+  digitalWrite(STATUS_G, false);
+  digitalWrite(STATUS_B, true);
+  delay(500);
+
+  digitalWrite(STATUS_R, false);
+  digitalWrite(STATUS_G, true);
+  digitalWrite(STATUS_B, true);
+  delay(500);
+
+  digitalWrite(STATUS_R, true);
+  digitalWrite(STATUS_B, true);
+  delay(500);
+  
 }
