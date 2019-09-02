@@ -14,8 +14,8 @@ void initConfigServer()
   server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest * request){ handleSsidGet(request, "WiFi Settings", "/wifi", settings.wifiSsid);});
   server.on("/ap", HTTP_GET, [](AsyncWebServerRequest * request){ handleSsidGet(request, "Access Point Settings", "/ap", settings.accessPointSsid);});
 
-  server.on("/wifi", HTTP_POST, [](AsyncWebServerRequest * request){ handleSsidPost(request, settings.wifiSsid, settings.wifiPassword, true, true);});
-  server.on("/ap", HTTP_POST, [](AsyncWebServerRequest * request){ handleSsidPost(request, settings.accessPointSsid, settings.accessPointPassword, true, false);});
+  server.on("/wifi", HTTP_POST, [](AsyncWebServerRequest * request){ handleSsidPost(request, settings.wifiSsid, settings.wifiPassword, true, true, false);});
+  server.on("/ap", HTTP_POST, [](AsyncWebServerRequest * request){ handleSsidPost(request, settings.accessPointSsid, settings.accessPointPassword, true, false, true);});
 
   // Starting the webserver
   server.begin();
@@ -62,7 +62,7 @@ void handleRoot(AsyncWebServerRequest * request)
 
 void handleSsidGet(AsyncWebServerRequest * request, String formTitle, String postPath, const char* ssid)
 {
-  if(!verifyAccessPointClient(request))
+  if(!authorizeAccess(request))
     return;
       
   request->send(200, "text/html", 
@@ -77,21 +77,21 @@ void handleSsidGet(AsyncWebServerRequest * request, String formTitle, String pos
   ); 
 }
 
-void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, bool saveSettings, bool restartWifiIfCredentialsChanged)
+void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, bool saveSettings, bool restartWifiIfCredentialsChanged, bool restartAccessPointIfCredentialsChanged)
 {
-  if(!verifyAccessPointClient(request))
+  if(!authorizeAccess(request))
     return;
   
   String str;
-  bool restartWifi = false;
+  bool credentialsChanged = false;
   if(request->hasParam("ssid", true))
   {
     AsyncWebParameter* p = request->getParam("ssid", true);
     str = p->value();
     str.trim();
     
-    if(restartWifiIfCredentialsChanged && String(ssid) != str)
-      restartWifi = true;
+    if(String(ssid) != str)
+      credentialsChanged = true;
       
     str.toCharArray(ssid, SSID_MAX_LENGTH-1);
   }
@@ -104,8 +104,8 @@ void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, b
 
     if(str.length() > 0)
     {
-      if(restartWifiIfCredentialsChanged && String(ssidpw) != str)
-        restartWifi = true;
+      if(String(ssidpw) != str)
+        credentialsChanged = true;
 
       str.toCharArray(ssidpw, SSID_PASSWORD_MAX_LENGTH-1);
     }     
@@ -119,7 +119,7 @@ void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, b
 
   showSettings(settings);
 
-  if(restartWifi)
+  if(credentialsChanged && restartWifiIfCredentialsChanged)
   {
     while(WiFi.status() == WL_CONNECTED)
     {
@@ -133,6 +133,15 @@ void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, b
     
   }
 
+  if(credentialsChanged && restartAccessPointIfCredentialsChanged)
+  {
+    Serial.print("Resetting up Access Point …");
+    WiFi.softAP(settings.accessPointSsid, settings.accessPointPassword);
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);
+  }
+
   request->send(200, "text/html", 
     htmlPageHead() +
     "<h2>Settings saved!</h2>" + 
@@ -140,7 +149,7 @@ void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, b
   );
 }
 
-bool verifyAccessPointClient(AsyncWebServerRequest* request)
+bool authorizeAccess(AsyncWebServerRequest* request)
 {
   IPAddress clientIp = request->client()->remoteIP();
   IPAddress apIp = WiFi.softAPIP();
@@ -149,7 +158,7 @@ bool verifyAccessPointClient(AsyncWebServerRequest* request)
   Serial.print("AP IP: ");
   Serial.println(apIp);
 
-  if(clientIp[0] == apIp[0] && clientIp[1] == apIp[1] && clientIp[2] == apIp[2])
+  if(ENABLE_CONFIGRATION_OVER_LAN || (clientIp[0] == apIp[0] && clientIp[1] == apIp[1] && clientIp[2] == apIp[2]))
   {
     return true;
   }
@@ -172,6 +181,9 @@ String htmlPageHead()
     "<html>"
       "<head>"
         "<style>"
+          "body{font-family: arial,sans-serif;}"
+          "input{font-size: 1em;}"
+          "@media (max-width: 992px){ body{font-size: 1.75em;}}"
           ".red{color:red;}"
           "div{margin-left: 10px; margin-right: 10px}"
         "</style>"

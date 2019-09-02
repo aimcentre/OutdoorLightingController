@@ -36,6 +36,10 @@ struct configSettings_t
 #define AP_NAME "LightingControllerAP"
 #define DEFAULT_AP_PW "pass1234"
 
+// Enable configuring the portal over WIFI LAN. 
+// WARNING: NOT SECURE. Set this to false in production environment
+#define ENABLE_CONFIGRATION_OVER_LAN true
+  
 // Set the following directive to true to display passwords on the debugger
 #define DEBUG_DISPLAY_CUSTOM_PASSWORDS false
 

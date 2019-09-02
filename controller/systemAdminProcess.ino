@@ -22,11 +22,12 @@ void systemAdminProcess(void * parameter) {
     }
     */
 
+    // Checking if Access Point password-reset button is kept pressed (in which case it retrnse false) false for10 second
     unsigned long t = millis();
-    while(millis() - t < 10000 && digitalRead(WIFI_RESET) == false)
+    while(digitalRead(WIFI_RESET) == false && millis() - t < 10000)
       delay(100);
-    
-    if(digitalRead(WIFI_RESET) == false)
+
+    if(millis() - t >= 10000  && digitalRead(WIFI_RESET) == false)
     {
       Serial.println("Restting access-point password to default value ...");
       
@@ -37,6 +38,13 @@ void systemAdminProcess(void * parameter) {
       EEPROM.put(0, settings);
       EEPROM.commit();
       delay(1000);
+
+      // Resetting access point
+      Serial.print("Resetting up Access Point …");
+      WiFi.softAP(settings.accessPointSsid, settings.accessPointPassword);
+      IPAddress IP = WiFi.softAPIP();
+      Serial.print("AP IP address: ");
+      Serial.println(IP);
      
       accessPointPasswordResetComplete = true;  
       accessPointPasswordResetBtnPressedTime = 0;
