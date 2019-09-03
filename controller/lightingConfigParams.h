@@ -73,4 +73,8 @@ volatile bool accessPointPasswordResetComplete = false;
 
 volatile bool testMode = false;
 
+#define SENSOR_STATES_HOSTORY_MAX 80
+volatile sensorState_t sensorStateHistory[SENSOR_STATES_HOSTORY_MAX];
+volatile int sensorStateHistoryLength = 0;
+
  

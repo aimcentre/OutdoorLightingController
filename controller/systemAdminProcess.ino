@@ -59,6 +59,15 @@ void systemAdminProcess(void * parameter) {
       Serial.println(WiFi.localIP());
       wifiInitialized = true;
     }
+
+    //if(WiFi.status() && 
+    // TODO: check if sensor states hostory exists and if so save these states to the
+    // spereadsheet https://docs.google.com/spreadsheets/d/1TkAlMnVnXBWtPnGmd1scvsLT7g7rjA1LxRSghtyn-48/edit#gid=0 by using its
+    // Web App API Call: https://script.google.com/macros/s/AKfycbzM92oEPPacHXdE_Aq_YEhMkFd3q18OkqaEyAQXNZSxR0JYIJUz/exec?
+    // where, append the motion sensor states asquery parameters. Use the query variable names to match exactly (case sensitive) the column names.
+    // Check the App Script project of the spreadsheet for details.
+    
+   
    
     delay(500);
 
