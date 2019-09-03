@@ -99,8 +99,8 @@ void IRAM_ATTR onAccessPointPasswordResetBtnPressed()
 void lightingControlProcess(void * parameter)
 {
   sensorState_t sensorTriggers;
-  lampState_t segA, segB, segC;
-  bool prevOnA = false, prevOnB = false, prevOnC = false;
+  lampState_t segA, segB, segC, segD;
+  bool prevOnA = false, prevOnB = false, prevOnC = false, prevOnD = false;
    
   for(;;)
   {
@@ -121,31 +121,35 @@ void lightingControlProcess(void * parameter)
       if(segC.offset == 0)
         segC.period = lampStateC.period > 0 ? lampStateC.period-- : 0;
 
+      segD.offset = lampStateD.offset > 0 ? lampStateD.offset-- : 0;
+      if(segD.offset == 0)
+        segD.period = lampStateD.period > 0 ? lampStateD.period-- : 0;
+        
+
       portEXIT_CRITICAL(&timerMux);
 
       // Checking the new states of lamp segments depending on whether the corresponding timer values are positive or zero
       int dayLightLevel = analogRead(DAYLIGHT_SENSOR);
       bool isNight = dayLightLevel < settings.dayLightThreshold;
-      bool turnOnA = (settings.testMode || isNight) && segA.offset == 0 && segA.period > 0;
-      bool turnOnB = (settings.testMode || isNight) && segB.offset == 0 && segB.period > 0;
-      bool turnOnC = (settings.testMode || isNight) && segC.offset == 0 && segC.period > 0;
+      bool turnOnA = isNight && segA.offset == 0 && segA.period > 0;
+      bool turnOnB = isNight && segB.offset == 0 && segB.period > 0;
+      bool turnOnC = isNight && segC.offset == 0 && segC.period > 0;
+      bool turnOnD = isNight && segD.offset == 0 && segD.period > 0;
 
-      if(prevOnA != turnOnA || prevOnB != turnOnB || prevOnC != turnOnC)
+      if(prevOnA != turnOnA || prevOnB != turnOnB || prevOnC != turnOnC || prevOnD != turnOnD)
       {
         digitalWrite(LAMP_A, turnOnA ? ON : OFF);
         digitalWrite(LAMP_B, turnOnB ? ON : OFF);
         digitalWrite(LAMP_C, turnOnC ? ON : OFF);
+        digitalWrite(LAMP_D, turnOnD ? ON : OFF);
 
-        if(settings.testMode)
-        {
-          Serial.printf("Segment A: %s, Segment B: %s, Segment C: %s", turnOnA ? "ON" : "OFF", turnOnB ? "ON" : "OFF", turnOnC ? "ON" : "OFF");
-          Serial.println();
-        }
+        Serial.printf("Segment A: %s, Segment B: %s, Segment C: %s, , Segment D: %s\r\n", turnOnA ? "ON" : "OFF", turnOnB ? "ON" : "OFF", turnOnC ? "ON" : "OFF", turnOnD ? "ON" : "OFF");
       }
 
       prevOnA = turnOnA;
       prevOnB = turnOnB;
       prevOnC = turnOnC;
+      prevOnD = turnOnD;
     }
     else
       delay(10);

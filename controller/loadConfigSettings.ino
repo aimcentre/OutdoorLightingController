@@ -33,7 +33,6 @@ void loadConfigSettings(configSettings_t& settings)
     settings.wifiSsid[0] = 0; //Setting the WiFi SSID to null
     settings.wifiPassword[0] = 0; //Setting the WiFi Password to null
 
-    settings.testMode = true;
     settings.regularLampOnTime = REG_LAMP_ON_TIME;
     settings.auxiliaryLampOnTime = AUX_LAMP_ON_TIME;
     settings.interSegmentDelay = INTER_SEG_DELAY;

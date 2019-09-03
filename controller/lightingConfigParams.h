@@ -38,10 +38,6 @@
 #define ON HIGH
 #define OFF LOW
 
-// Day-light sensor threshold. The lamps will be turned on only when the 
-// day-light sendor value is below this threshold.
-#define DAYLIGHT_THRESHOLD 2000 
-
 #define DAYLIGHT_SENSOR AIN_1
 
 // Data structure to keep track of when each motion sensor was triggered 
@@ -74,5 +70,7 @@ volatile lampState_t lampStateD{0,0};
 
 volatile unsigned long accessPointPasswordResetBtnPressedTime = 0;
 volatile bool accessPointPasswordResetComplete = false;
+
+volatile bool testMode = false;
 
  

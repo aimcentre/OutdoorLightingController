@@ -23,7 +23,6 @@ struct configSettings_t
   char wifiSsid[SSID_MAX_LENGTH];
   char wifiPassword[SSID_PASSWORD_MAX_LENGTH];
 
-  bool testMode;
   unsigned int regularLampOnTime;
   unsigned int auxiliaryLampOnTime;
 
@@ -38,13 +37,19 @@ struct configSettings_t
 
 // Enable configuring the portal over WIFI LAN. 
 // WARNING: NOT SECURE. Set this to false in production environment
-#define ENABLE_CONFIGRATION_OVER_LAN true
+#define ENABLE_CONFIGRATION_OVER_LAN false
   
 // Set the following directive to true to display passwords on the debugger
 #define DEBUG_DISPLAY_CUSTOM_PASSWORDS false
 
-// Default on time for lamps in seconds
-#define REG_LAMP_ON_TIME 10
-#define AUX_LAMP_ON_TIME 3
+// Default lighting parameters. All time periods are in seconds
+#define REG_LAMP_ON_TIME 480
+#define AUX_LAMP_ON_TIME 90
+#define INTER_SEG_DELAY 10
+#define DAYLIGHT_THRESHOLD 800
 
-#define INTER_SEG_DELAY 5
+// Test-mode lighting parameters. All time periods are in seconds
+#define TEST_REG_LAMP_ON_TIME 10
+#define TEST_AUX_LAMP_ON_TIME 3
+#define TEST_INTER_SEG_DELAY 5
+#define TEST_DAYLIGHT_THRESHOLD 4095

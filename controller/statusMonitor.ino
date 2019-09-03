@@ -16,7 +16,7 @@ void systemMonitorProcess(void * parameter) {
     else
     {
       int dayLightLevel = analogRead(DAYLIGHT_SENSOR);
-      Serial.printf("daylight status: %d\r\n", dayLightLevel);
+      //Serial.printf("daylight status: %d\r\n", dayLightLevel);
   
       if(dayLightLevel < settings.dayLightThreshold)
         solid(B_LED, 500);
