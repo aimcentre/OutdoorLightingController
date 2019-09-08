@@ -63,10 +63,11 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 volatile SemaphoreHandle_t timerSemaphore;
 
 volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
-volatile lampState_t lampStateA{0,0};
-volatile lampState_t lampStateB{0,0};
-volatile lampState_t lampStateC{0,0};
-volatile lampState_t lampStateD{0,0};
+volatile lampState_t lampState1{0,0};
+volatile lampState_t lampState2{0,0};
+volatile lampState_t lampState3{0,0};
+volatile lampState_t lampState4{0,0};
+volatile lampState_t lampState5{0,0};
 
 volatile unsigned long accessPointPasswordResetBtnPressedTime = 0;
 volatile bool accessPointPasswordResetComplete = false;

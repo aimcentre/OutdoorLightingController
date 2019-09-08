@@ -15,10 +15,10 @@ void IRAM_ATTR onMotionA()
   sensorTriggerTimestamps.clockA = millis();
   
   // Turnning on the lamp segment 1 immediately for the default duration
-  turnLampSegmentOn(&lampStateA, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampState1, 0, settings.regularLampOnTime);
 
   // Scheduling lamp segment 2 to turn on for the auxiliary interval after the inter-segment delay
-  turnLampSegmentOn(&lampStateB, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+  turnLampSegmentOn(&lampState2, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
 
   portEXIT_CRITICAL(&timerMux);
 }
@@ -29,8 +29,8 @@ void IRAM_ATTR onMotionB()
   sensorTriggerTimestamps.clockB = millis();
 
   // Turnning on the lamp segments 1 and 2 immediately for the default duration
-  turnLampSegmentOn(&lampStateA, 0, settings.regularLampOnTime);
-  turnLampSegmentOn(&lampStateB, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampState1, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampState2, 0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -41,10 +41,10 @@ void IRAM_ATTR onMotionC()
   sensorTriggerTimestamps.clockC = millis();
   
   // Turnning on the lamp segment 2 immediately for the default duration
-  turnLampSegmentOn(&lampStateB, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampState2, 0, settings.regularLampOnTime);
 
   // Scheduling lamp segment 3 to turn on for the auxiliary interval shortly after
-  turnLampSegmentOn(&lampStateC, settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
+  turnLampSegmentOn(&lampState3, settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -55,10 +55,10 @@ void IRAM_ATTR onMotionD()
   sensorTriggerTimestamps.clockD = millis();
 
   // Turnning on the lamp segment 3 immediately for the default duration
-  turnLampSegmentOn(&lampStateC, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampState3, 0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment 4 immediately for the auxiliary interval
-  turnLampSegmentOn(&lampStateD, 0, settings.auxiliaryLampOnTime);
+  turnLampSegmentOn(&lampState4, 0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -69,10 +69,10 @@ void IRAM_ATTR onMotionE()
   sensorTriggerTimestamps.clockE = millis();
 
   // Turnning on the lamp segment 4 immediately for the default duration
-  turnLampSegmentOn(&lampStateD, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampState4, 0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment 3 immediately for the auxiliary interval
-  turnLampSegmentOn(&lampStateC, 0, settings.auxiliaryLampOnTime);
+  turnLampSegmentOn(&lampState3, 0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -83,7 +83,7 @@ void IRAM_ATTR onMotionF()
   sensorTriggerTimestamps.clockF = millis();
 
   // Turnning on the lamp segment 4 immediately for the default duration
-  turnLampSegmentOn(&lampStateD, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampState4, 0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -98,8 +98,8 @@ void IRAM_ATTR onAccessPointPasswordResetBtnPressed()
 void lightingControlProcess(void * parameter)
 {
   sensorState_t sensorTriggers;
-  lampState_t segA, segB, segC, segD;
-  bool prevOnA = false, prevOnB = false, prevOnC = false, prevOnD = false;
+  lampState_t segA, segB, segC, segD, segE;
+  bool prevOnA = false, prevOnB = false, prevOnC = false, prevOnD = false, prevOnE = false;
    
   for(;;)
   {
@@ -108,22 +108,25 @@ void lightingControlProcess(void * parameter)
       // Locking the timer mutex, decrementing and coying lamp-state timer values, and releasing the mutex
       portENTER_CRITICAL(&timerMux);
 
-      segA.offset = lampStateA.offset > 0 ? lampStateA.offset-- : 0;
+      segA.offset = lampState1.offset > 0 ? lampState1.offset-- : 0;
       if(segA.offset == 0)
-        segA.period = lampStateA.period > 0 ? lampStateA.period-- : 0;
+        segA.period = lampState1.period > 0 ? lampState1.period-- : 0;
 
-      segB.offset = lampStateB.offset > 0 ? lampStateB.offset-- : 0;
+      segB.offset = lampState2.offset > 0 ? lampState2.offset-- : 0;
       if(segB.offset == 0)
-        segB.period = lampStateB.period > 0 ? lampStateB.period-- : 0;
+        segB.period = lampState2.period > 0 ? lampState2.period-- : 0;
       
-      segC.offset = lampStateC.offset > 0 ? lampStateC.offset-- : 0;
+      segC.offset = lampState3.offset > 0 ? lampState3.offset-- : 0;
       if(segC.offset == 0)
-        segC.period = lampStateC.period > 0 ? lampStateC.period-- : 0;
+        segC.period = lampState3.period > 0 ? lampState3.period-- : 0;
 
-      segD.offset = lampStateD.offset > 0 ? lampStateD.offset-- : 0;
+      segD.offset = lampState4.offset > 0 ? lampState4.offset-- : 0;
       if(segD.offset == 0)
-        segD.period = lampStateD.period > 0 ? lampStateD.period-- : 0;
+        segD.period = lampState4.period > 0 ? lampState4.period-- : 0;
         
+      segE.offset = lampState5.offset > 0 ? lampState5.offset-- : 0;
+      if(segE.offset == 0)
+        segE.period = lampState5.period > 0 ? lampState5.period-- : 0;
 
       portEXIT_CRITICAL(&timerMux);
 
@@ -134,21 +137,24 @@ void lightingControlProcess(void * parameter)
       bool turnOnB = isNight && segB.offset == 0 && segB.period > 0;
       bool turnOnC = isNight && segC.offset == 0 && segC.period > 0;
       bool turnOnD = isNight && segD.offset == 0 && segD.period > 0;
+      bool turnOnE = isNight && segE.offset == 0 && segE.period > 0;
 
-      if(prevOnA != turnOnA || prevOnB != turnOnB || prevOnC != turnOnC || prevOnD != turnOnD)
+      if(prevOnA != turnOnA || prevOnB != turnOnB || prevOnC != turnOnC || prevOnD != turnOnD || prevOnE != turnOnE)
       {
         digitalWrite(LAMP_A, turnOnA ? ON : OFF);
         digitalWrite(LAMP_B, turnOnB ? ON : OFF);
         digitalWrite(LAMP_C, turnOnC ? ON : OFF);
         digitalWrite(LAMP_D, turnOnD ? ON : OFF);
+        digitalWrite(LAMP_E, turnOnE ? ON : OFF);
 
-        Serial.printf("Segment A: %s, Segment B: %s, Segment C: %s, , Segment D: %s\r\n", turnOnA ? "ON" : "OFF", turnOnB ? "ON" : "OFF", turnOnC ? "ON" : "OFF", turnOnD ? "ON" : "OFF");
+        Serial.printf("Segment A: %s, Segment B: %s, Segment C: %s, Segment D: %s, Segment E: %s\r\n", turnOnA ? "ON" : "OFF", turnOnB ? "ON" : "OFF", turnOnC ? "ON" : "OFF", turnOnD ? "ON" : "OFF", turnOnE ? "ON" : "OFF");
       }
 
       prevOnA = turnOnA;
       prevOnB = turnOnB;
       prevOnC = turnOnC;
       prevOnD = turnOnD;
+      prevOnE = turnOnE;
     }
     else
       delay(10);
@@ -180,10 +186,14 @@ void initLightingControlSystem()
   pinMode(LAMP_A, OUTPUT);
   pinMode(LAMP_B, OUTPUT);
   pinMode(LAMP_C, OUTPUT);
+  pinMode(LAMP_D, OUTPUT);
+  pinMode(LAMP_E, OUTPUT);
 
   digitalWrite(LAMP_A,  OFF);
   digitalWrite(LAMP_B,  OFF);
   digitalWrite(LAMP_C,  OFF);
+  digitalWrite(LAMP_D,  OFF);
+  digitalWrite(LAMP_E,  OFF);
 
   digitalWrite(STATUS_R,  OFF);
   digitalWrite(STATUS_G,  OFF);
@@ -217,6 +227,14 @@ void initLightingControlSystem()
 
   // Setting up Access Point password-reset inturrupt
   attachInterrupt(WIFI_RESET, &onAccessPointPasswordResetBtnPressed, FALLING);
+
+  // Turnning all lamps for 5 second
+  turnLampSegmentOn(&lampState1, 0, 5);
+  turnLampSegmentOn(&lampState2, 0, 5);
+  turnLampSegmentOn(&lampState3, 0, 5);
+  turnLampSegmentOn(&lampState4, 0, 5);
+  turnLampSegmentOn(&lampState5, 0, 5);
+  
 }
 
 void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period)
