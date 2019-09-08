@@ -1,5 +1,7 @@
-void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period);
-void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int period);
+void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period);
+
+// References: lamp segments and sensor locatoins: https://www.lucidchart.com/documents/edit/67ebf293-cd7d-4d02-a396-586ca6e3912b/alWyEGoyqXJH?referringApp=google+drive&beaconFlowId=f2d16d7b76909438
+// Triggering sequences: https://docs.google.com/spreadsheets/d/1fJMQOhua9JjkMa0Pfh4PbR-ifbYxZwPVFoGUY_oMN4c/edit#gid=0
 
 void IRAM_ATTR onTimer()
 {  
@@ -12,11 +14,11 @@ void IRAM_ATTR onMotionA()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockA = millis();
   
-  // Turnning on the lamp segment A immediately for the default duration
-  turnLampSegmentOn(&lampStateA, settings.regularLampOnTime);
+  // Turnning on the lamp segment 1 immediately for the default duration
+  turnLampSegmentOn(&lampStateA, 0, settings.regularLampOnTime);
 
-  // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
-  scheduleLampSegmentOn(&lampStateB, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+  // Scheduling lamp segment 2 to turn on for the auxiliary interval after the inter-segment delay
+  turnLampSegmentOn(&lampStateB, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
 
   portEXIT_CRITICAL(&timerMux);
 }
@@ -26,9 +28,9 @@ void IRAM_ATTR onMotionB()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockB = millis();
 
-  // Turnning on the lamp segments A and B immediately for the default duration
-  turnLampSegmentOn(&lampStateA, settings.regularLampOnTime);
-  turnLampSegmentOn(&lampStateB, settings.regularLampOnTime);
+  // Turnning on the lamp segments 1 and 2 immediately for the default duration
+  turnLampSegmentOn(&lampStateA, 0, settings.regularLampOnTime);
+  turnLampSegmentOn(&lampStateB, 0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -38,11 +40,11 @@ void IRAM_ATTR onMotionC()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockC = millis();
   
-  // Turnning on the lamp segment B immediately for the default duration
-  turnLampSegmentOn(&lampStateB, settings.regularLampOnTime);
+  // Turnning on the lamp segment 2 immediately for the default duration
+  turnLampSegmentOn(&lampStateB, 0, settings.regularLampOnTime);
 
-  // Scheduling lamp segment A to turn on for the auxiliary interval after the inter-segment delay
-  scheduleLampSegmentOn(&lampStateA, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+  // Scheduling lamp segment 3 to turn on for the auxiliary interval shortly after
+  turnLampSegmentOn(&lampStateC, settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -52,14 +54,11 @@ void IRAM_ATTR onMotionD()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockD = millis();
 
-  // Turnning on the lamp segment C immediately for the default duration
-  turnLampSegmentOn(&lampStateC, settings.regularLampOnTime);
+  // Turnning on the lamp segment 3 immediately for the default duration
+  turnLampSegmentOn(&lampStateC, 0, settings.regularLampOnTime);
 
-  // Turnning on the lamp segment D immediately for the auxiliary interval
-  turnLampSegmentOn(&lampStateD, settings.auxiliaryLampOnTime);
-
-  // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
-  scheduleLampSegmentOn(&lampStateB, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+  // Turnning on the lamp segment 4 immediately for the auxiliary interval
+  turnLampSegmentOn(&lampStateD, 0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -69,11 +68,11 @@ void IRAM_ATTR onMotionE()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockE = millis();
 
-  // Turnning on the lamp segment D immediately for the default duration
-  turnLampSegmentOn(&lampStateD, settings.regularLampOnTime);
+  // Turnning on the lamp segment 4 immediately for the default duration
+  turnLampSegmentOn(&lampStateD, 0, settings.regularLampOnTime);
 
-  // Turnning on the lamp segment C immediately for the auxiliary interval
-  turnLampSegmentOn(&lampStateC, settings.auxiliaryLampOnTime);
+  // Turnning on the lamp segment 3 immediately for the auxiliary interval
+  turnLampSegmentOn(&lampStateC, 0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -83,8 +82,8 @@ void IRAM_ATTR onMotionF()
   portENTER_CRITICAL(&timerMux);
   sensorTriggerTimestamps.clockF = millis();
 
-  // Turnning on the lamp segment D immediately for the default duration
-  turnLampSegmentOn(&lampStateD, settings.regularLampOnTime);
+  // Turnning on the lamp segment 4 immediately for the default duration
+  turnLampSegmentOn(&lampStateD, 0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -220,7 +219,7 @@ void initLightingControlSystem()
   attachInterrupt(WIFI_RESET, &onAccessPointPasswordResetBtnPressed, FALLING);
 }
 
-void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period)
+void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int offset, unsigned int period)
 {
   if(lampState->period == 0)
   {
@@ -228,23 +227,30 @@ void IRAM_ATTR scheduleLampSegmentOn(volatile lampState_t* lampState, unsigned i
     lampState->offset = offset;
     lampState->period = period;
   }
-  else if(lampState->offset == 0)
-  {
-    // Segment is currently turned on. Keep it turned on for current period or the given offset+period, whichever is longer
-    unsigned int t = lampState->period;
-    lampState->period = max (t, offset + period);    
-  }
   else
   {
-    // The segment is scheduled to be turned on after some delay. Turn it on after that delay or the given offset, whichever is smaller,
-    // and keep it on past the scheduled period or the the given offset+period, whichever is larger
-    int time_to_turn_off = max(lampState->offset + lampState->period, offset + period);
-    unsigned int t = lampState->offset;
-    lampState->offset = min(t, offset);
-    lampState->period = time_to_turn_off - lampState->offset;
-  } 
+    // The segment is either currently on or it is scheduled to be on
+    
+    if(lampState->offset == 0)
+    {
+      // Segment is currently turned on. Keep it turned on for current period or the given offset+period, whichever is longer
+      unsigned int t = lampState->period;
+      lampState->period = max (t, offset + period);    
+    }
+    else
+    {
+      // The segment is scheduled to be turned on after the delay specified by lampState->offset. 
+      // Turn it on after that delay or the given offset, whichever is smaller,
+      // and then keep it on past the scheduled period or the the given offset+period, whichever is larger
+      int time_to_turn_off = max(lampState->offset + lampState->period, offset + period);
+      unsigned int t = lampState->offset;
+      lampState->offset = min(t, offset);
+      lampState->period = time_to_turn_off - lampState->offset;
+    } 
+  }
 }
 
+/*
 void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int period)
 {
   if(lampState->period == 0)
@@ -263,3 +269,4 @@ void IRAM_ATTR turnLampSegmentOn(volatile lampState_t* lampState, unsigned int p
     lampState->period = time_to_turn_off;
   }
 }
+*/
