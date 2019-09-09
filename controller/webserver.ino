@@ -67,9 +67,9 @@ void handleRoot(AsyncWebServerRequest * request)
   response->print("<h2>Lighting Settings</h2>");
   response->print("<div><ul>");
   response->print("<li>Regular Lamps-on Period: "); response->print(settings.regularLampOnTime); response->print(" seconds</li>");
-  response->print("<li>Auxiliary Lamps-on Period: "); response->print(settings.auxiliaryLampOnTime); response->print(" seconds</li>");
+  response->print("<li>Short Lamps-on Period: "); response->print(settings.auxiliaryLampOnTime); response->print(" seconds</li>");
   response->print("<li>Inter-segment Time Delay: "); response->print(settings.interSegmentDelay); response->print(" seconds</li>");
-  response->print("<li>Day-light Treshold (0 - 4095): "); response->print(settings.dayLightThreshold); response->print("</li>");
+  response->print("<li>Day-light Threshold (0 - 4095): "); response->print(settings.dayLightThreshold); response->print("</li>");
   response->print("</ul>");
   if(enableChanges)    
     response->print("<a href='/lighting'>[Update]</a> ");    
@@ -187,9 +187,9 @@ void handleLightingSettingsGet(AsyncWebServerRequest * request)
     "<h2>Lighting System Parameters</h2>"
     "<form method='POST' action='/lighting'>"
       "<label>Regular Lamp-on Time:</label> <input type='number' name='regOnTime', value='" + String(settings.regularLampOnTime) + "'><br />"
-      "<label>Auxiliary Lamp-on Time:</label> <input type='number' name='auxOnTime', value='" + String(settings.auxiliaryLampOnTime) + "'><br />"
+      "<label>Short Lamp-on Time:</label> <input type='number' name='auxOnTime', value='" + String(settings.auxiliaryLampOnTime) + "'><br />"
       "<label>Inter-segment Time Delay:</label> <input type='number' name='intSegDelay', value='" + String(settings.interSegmentDelay) + "'><br />"
-      "<label>Day-light Treshold (0 - 4095):</label> <input type='number' name='daylightThreshold', value='" + String(settings.dayLightThreshold) + "'><br />"
+      "<label>Day-light Threshold (0 - 4095):</label> <input type='number' name='daylightThreshold', value='" + String(settings.dayLightThreshold) + "'><br />"
       "<input type='submit' value='Update'>"
     "</form>" + 
     htmlPageTail(true)
@@ -321,9 +321,9 @@ void sendTestModeSettings(AsyncResponseStream *response)
   response->print("The test mode uses following parameters: <br />");
   response->print("<div>");
   response->print("Regular Lamps-on Period: "); response->print(TEST_REG_LAMP_ON_TIME); response->print(" seconds"); response->print("<br />");
-  response->print("Auxiliary Lamps-on Period: "); response->print(TEST_AUX_LAMP_ON_TIME); response->print(" seconds"); response->print("<br />");
+  response->print("Short Lamps-on Period: "); response->print(TEST_AUX_LAMP_ON_TIME); response->print(" seconds"); response->print("<br />");
   response->print("Inter-segment Time Delay: "); response->print(TEST_INTER_SEG_DELAY); response->print(" seconds"); response->print("<br />");
-  response->print("Day-light Treshold (0 - 4095): "); response->print(TEST_DAYLIGHT_THRESHOLD); response->print("<br />");    
+  response->print("Day-light Threshold (0 - 4095): "); response->print(TEST_DAYLIGHT_THRESHOLD); response->print("<br />");    
   response->print("</div>"); 
 }
 
