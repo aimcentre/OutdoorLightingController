@@ -77,5 +77,10 @@ volatile bool testMode = false;
 #define SENSOR_STATES_HOSTORY_MAX 80
 volatile sensorState_t sensorStateHistory[SENSOR_STATES_HOSTORY_MAX];
 volatile int sensorStateHistoryLength = 0;
+volatile int dayLightLevel = 0;
+
+const char* host = "script.google.com";
+String url = "/macros/s/AKfycbzM92oEPPacHXdE_Aq_YEhMkFd3q18OkqaEyAQXNZSxR0JYIJUz/exec";
+
 
  

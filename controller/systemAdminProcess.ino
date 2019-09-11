@@ -1,8 +1,11 @@
+#include <WiFiClientSecure.h>
 
 char *WifiSSID = NULL, *WifiPassword = NULL;
 
 void systemAdminProcess(void * parameter) {
-  
+
+  sensorState_t prevSensorStates{0, 0, 0, 0, 0, 0};
+  sensorState_t currentSensorStates;
   for(;;) 
   {
     /*
@@ -67,7 +70,48 @@ void systemAdminProcess(void * parameter) {
     // where, append the motion sensor states asquery parameters. Use the query variable names to match exactly (case sensitive) the column names.
     // Check the App Script project of the spreadsheet for details.
     
-   
+   if(WiFi.status() == WL_CONNECTED)
+   {
+      int lightLevel = 0;
+      portENTER_CRITICAL(&timerMux);
+      lightLevel = dayLightLevel;
+      currentSensorStates.clockA = sensorTriggerTimestamps.clockA;
+      currentSensorStates.clockB = sensorTriggerTimestamps.clockB;
+      currentSensorStates.clockC = sensorTriggerTimestamps.clockC;
+      currentSensorStates.clockD = sensorTriggerTimestamps.clockD;
+      currentSensorStates.clockE = sensorTriggerTimestamps.clockE;
+      currentSensorStates.clockF = sensorTriggerTimestamps.clockF;
+      portEXIT_CRITICAL(&timerMux);
+      
+      if(prevSensorStates.clockA != currentSensorStates.clockA ||
+         prevSensorStates.clockB != currentSensorStates.clockB ||
+         prevSensorStates.clockC != currentSensorStates.clockC ||
+         prevSensorStates.clockD != currentSensorStates.clockD ||
+         prevSensorStates.clockE != currentSensorStates.clockE ||
+         prevSensorStates.clockF != currentSensorStates.clockF)
+       {
+          WiFiClientSecure client;
+          const int httpPort = 443;
+          if (!client.connect(host, httpPort)) {
+            Serial.println("connection failed");
+            return;
+          }
+          
+          String params = String("?m1=") + currentSensorStates.clockA + "&m2=" + currentSensorStates.clockB + "&m3=" + currentSensorStates.clockC + "&m4=" + currentSensorStates.clockD + "&m5=" + currentSensorStates.clockE + "&m6=" + currentSensorStates.clockF + "&d=" + lightLevel;
+          String dataEncodedUrl = url + params;
+          Serial.println(dataEncodedUrl);
+          client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
+               "Host: " + host + "\r\n" + 
+               "Connection: close\r\n\r\n");
+
+          prevSensorStates.clockA = currentSensorStates.clockA;
+          prevSensorStates.clockB = currentSensorStates.clockB;
+          prevSensorStates.clockC = currentSensorStates.clockC;
+          prevSensorStates.clockD = currentSensorStates.clockD;
+          prevSensorStates.clockE = currentSensorStates.clockE;
+          prevSensorStates.clockF = currentSensorStates.clockF;
+       }
+   }
    
     delay(500);
 
