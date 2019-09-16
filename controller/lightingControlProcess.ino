@@ -178,6 +178,8 @@ void initLightingControlSystem()
   
   pinMode(AIN_1, INPUT);
   pinMode(AIN_2, INPUT);
+  pinMode(AIN_3, INPUT);
+  pinMode(AIN_4, INPUT);
 
   pinMode(STATUS_R, OUTPUT);
   pinMode(STATUS_G, OUTPUT);

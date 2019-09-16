@@ -96,8 +96,8 @@ void systemAdminProcess(void * parameter) {
             Serial.println("connection failed");
             return;
           }
-          
-          String params = String("?m1=") + currentSensorStates.clockA + "&m2=" + currentSensorStates.clockB + "&m3=" + currentSensorStates.clockC + "&m4=" + currentSensorStates.clockD + "&m5=" + currentSensorStates.clockE + "&m6=" + currentSensorStates.clockF + "&d=" + lightLevel;
+          float temperature = getTemperature();
+          String params = String("?m1=") + currentSensorStates.clockA + "&m2=" + currentSensorStates.clockB + "&m3=" + currentSensorStates.clockC + "&m4=" + currentSensorStates.clockD + "&m5=" + currentSensorStates.clockE + "&m6=" + currentSensorStates.clockF + "&d=" + lightLevel + "&t=" + temperature;
           String dataEncodedUrl = url + params;
           Serial.println(dataEncodedUrl);
           client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +

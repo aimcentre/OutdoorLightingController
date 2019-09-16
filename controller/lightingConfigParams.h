@@ -3,7 +3,9 @@
 //             https://wiki.keyestudio.com/KS0413_keyestudio_ESP32_Core_Board
 
 #define AIN_1 35
-#define AIN_2 32
+#define AIN_2 34
+#define AIN_3 39
+#define AIN_4 36
 
 #define DIN_1 23
 #define DIN_2 22
@@ -23,6 +25,9 @@
 
 #define WIFI_RESET 13
 #define DAYLIGHT_SENSOR AIN_1
+#define TEMP_SENSOR_P AIN_3
+#define TEMP_SENSOR_N AIN_4
+
 #define STATUS_R 14
 #define STATUS_G 2
 #define STATUS_B 4
