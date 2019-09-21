@@ -105,12 +105,12 @@ void lightingControlProcess(void * parameter)
   {
     if (xSemaphoreTake(timerSemaphore, 0) == pdTRUE)
     {
-      int lightLevel = analogRead(DAYLIGHT_SENSOR);
+      int ambientDarkness = getDarknessLevel();
       
       // Locking the timer mutex, decrementing and coying lamp-state timer values, and releasing the mutex
       portENTER_CRITICAL(&timerMux);
 
-      dayLightLevel = lightLevel;
+      darknessLevel = ambientDarkness;
       segA.offset = lampState1.offset > 0 ? lampState1.offset-- : 0;
       if(segA.offset == 0)
         segA.period = lampState1.period > 0 ? lampState1.period-- : 0;
@@ -134,7 +134,7 @@ void lightingControlProcess(void * parameter)
       portEXIT_CRITICAL(&timerMux);
 
       // Checking the new states of lamp segments depending on whether the corresponding timer values are positive or zero
-      bool isNight = lightLevel < settings.dayLightThreshold;
+      bool isNight = darknessLevel > settings.dayLightThreshold;
       bool turnOnA = isNight && segA.offset == 0 && segA.period > 0;
       bool turnOnB = isNight && segB.offset == 0 && segB.period > 0;
       bool turnOnC = isNight && segC.offset == 0 && segC.period > 0;
@@ -162,6 +162,11 @@ void lightingControlProcess(void * parameter)
       delay(10);
   }
   
+}
+
+int getDarknessLevel()
+{
+  return analogRead(DAYLIGHT_SENSOR);
 }
 
 void initLightingControlSystem()

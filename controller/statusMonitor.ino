@@ -15,13 +15,19 @@ void systemMonitorProcess(void * parameter) {
     }
     else
     {
-      int dayLightLevel = analogRead(DAYLIGHT_SENSOR);
-      //Serial.printf("daylight status: %d\r\n", dayLightLevel);
+      int darknessLevel = analogRead(DAYLIGHT_SENSOR);
+      //Serial.printf("Ambient darkness: %d\r\n", darknessLevel);
   
-      if(dayLightLevel < settings.dayLightThreshold)
+      if(darknessLevel > settings.dayLightThreshold)
+      {
         solid(B_LED, 500);
+        Serial.printf("Ambient level: %d Threshold: %d Color: Blue\r\n", darknessLevel, settings.dayLightThreshold);
+      }
       else
+      {
         solid(G_LED, 500);
+        Serial.printf("Ambient darkness: %d Threshold: %d Color: Green\r\n", darknessLevel, settings.dayLightThreshold);
+      }
     }
 
     if(accessPointPasswordResetComplete)

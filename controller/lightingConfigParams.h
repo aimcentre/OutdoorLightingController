@@ -25,6 +25,7 @@
 
 #define WIFI_RESET 13
 #define DAYLIGHT_SENSOR AIN_1
+
 #define TEMP_SENSOR_P AIN_3
 #define TEMP_SENSOR_N AIN_4
 
@@ -82,7 +83,7 @@ volatile bool testMode = false;
 #define SENSOR_STATES_HOSTORY_MAX 80
 volatile sensorState_t sensorStateHistory[SENSOR_STATES_HOSTORY_MAX];
 volatile int sensorStateHistoryLength = 0;
-volatile int dayLightLevel = 0;
+volatile int darknessLevel = 0;
 
 const char* host = "script.google.com";
 String url = "/macros/s/AKfycbzM92oEPPacHXdE_Aq_YEhMkFd3q18OkqaEyAQXNZSxR0JYIJUz/exec";

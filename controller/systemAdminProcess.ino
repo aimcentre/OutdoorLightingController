@@ -72,9 +72,9 @@ void systemAdminProcess(void * parameter) {
     
    if(WiFi.status() == WL_CONNECTED)
    {
-      int lightLevel = 0;
+      int ambientDarkness = 0;
       portENTER_CRITICAL(&timerMux);
-      lightLevel = dayLightLevel;
+      ambientDarkness = darknessLevel;
       currentSensorStates.clockA = sensorTriggerTimestamps.clockA;
       currentSensorStates.clockB = sensorTriggerTimestamps.clockB;
       currentSensorStates.clockC = sensorTriggerTimestamps.clockC;
@@ -97,9 +97,16 @@ void systemAdminProcess(void * parameter) {
             return;
           }
           float temperature = getTemperature();
-          String params = String("?m1=") + currentSensorStates.clockA + "&m2=" + currentSensorStates.clockB + "&m3=" + currentSensorStates.clockC + "&m4=" + currentSensorStates.clockD + "&m5=" + currentSensorStates.clockE + "&m6=" + currentSensorStates.clockF + "&d=" + lightLevel + "&t=" + temperature;
+          String params = String("?m1=") + currentSensorStates.clockA + 
+                          "&m2=" + currentSensorStates.clockB + 
+                          "&m3=" + currentSensorStates.clockC + 
+                          "&m4=" + currentSensorStates.clockD + 
+                          "&m5=" + currentSensorStates.clockE + 
+                          "&m6=" + currentSensorStates.clockF + 
+                          "&d=" + ambientDarkness + 
+                          "&t=" + temperature;
           String dataEncodedUrl = url + params;
-          Serial.println(dataEncodedUrl);
+          //Serial.println(dataEncodedUrl);
           client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" + 
                "Connection: close\r\n\r\n");
