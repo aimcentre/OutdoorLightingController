@@ -46,7 +46,7 @@ class LampSegment
       }
       else
       {
-        // The segment is scheduled to be turned on after the delay specified by lampState->offset. 
+        // The segment is scheduled to be turned on after the delay specified by mOffset. 
         // Turn it on after that delay or the given offset, whichever is smaller,
         // and then keep it on past the scheduled period or the the given offset+period, whichever is larger
         int time_to_turn_off = max(mOffset + mPeriod, offset + period);
@@ -81,6 +81,12 @@ class LampSegment
     mLampStatus = (ambientDarkness > darknessThreshold && mOffset == 0 && mPeriod > 0) ? ON : OFF;
 
     Serial.printf("OnTick() called; Offset: %d, Period: %d, Lamp Status = %s\r\n", mOffset, mPeriod, mLampStatus == ON ? "ON" : "OFF");
+  }
+
+  void Reset() volatile
+  {
+    mOffset = 0;
+    mPeriod = 0;
   }
   
 };

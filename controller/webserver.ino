@@ -302,44 +302,24 @@ void handleTestModePost(AsyncWebServerRequest * request)
       settings.regularLampOnTime = TEST_REG_LAMP_ON_TIME;
       settings.auxiliaryLampOnTime = TEST_AUX_LAMP_ON_TIME;
       settings.interSegmentDelay = TEST_INTER_SEG_DELAY;
-      settings.dayLightThreshold = TEST_DAYLIGHT_THRESHOLD;
-
-      // resetting lamp-state timers
-      portENTER_CRITICAL(&timerMux);
-      lampState1.offset = 0;
-      lampState1.period = 5;
-      lampState2.offset = 0;
-      lampState2.period = 5;
-      lampState3.offset = 0;
-      lampState3.period = 5;
-      lampState4.offset = 0;
-      lampState4.period = 5;
-      lampState5.offset = 0;
-      lampState5.period = 5;      
-      portEXIT_CRITICAL(&timerMux);
+      settings.dayLightThreshold = TEST_DAYLIGHT_THRESHOLD;     
     }
     else
     {
       // Turn off test mode and reload settings from the EEPROM
       Serial.println("Exiting test mode!!");   
       testMode = false;   
-      loadConfigSettings(settings);
-
-      // resetting lamp-state timers
-      portENTER_CRITICAL(&timerMux);
-      lampState1.offset = 0;
-      lampState1.period = 0;
-      lampState2.offset = 0;
-      lampState2.period = 0;
-      lampState3.offset = 0;
-      lampState3.period = 0;
-      lampState4.offset = 0;
-      lampState4.period = 0;
-      lampState5.offset = 0;
-      lampState5.period = 0;      
-      portEXIT_CRITICAL(&timerMux);
-       
+      loadConfigSettings(settings);       
     }
+
+     // resetting lamp-state timers
+    portENTER_CRITICAL(&timerMux);
+    gSegmentA.Reset();
+    gSegmentB.Reset();
+    gSegmentC.Reset();
+    gSegmentD.Reset();
+    gSegmentE.Reset();
+    portEXIT_CRITICAL(&timerMux);   
 
     handleTestModeGet(request);
   }

@@ -21,23 +21,12 @@ struct sensorState_t
   unsigned long clockF;
 };
 
-struct lampState_t
-{
-  unsigned int offset;
-  unsigned int period;
-};
-
 // Lighting control data structures and interrupt timer variables
 hw_timer_t * timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 volatile SemaphoreHandle_t timerSemaphore;
 
 volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
-volatile lampState_t lampState1{0,0};
-volatile lampState_t lampState2{0,0};
-volatile lampState_t lampState3{0,0};
-volatile lampState_t lampState4{0,0};
-volatile lampState_t lampState5{0,0};
 
 volatile unsigned long accessPointPasswordResetBtnPressedTime = 0;
 volatile bool accessPointPasswordResetComplete = false;
