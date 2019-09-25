@@ -13,6 +13,9 @@
 #define SSID_PASSWORD_MAX_LENGTH 16
 
 // Configuration settings structure definition
+#ifndef CONFIG_SETTINGS_T
+#define CONFIG_SETTINGS_T 
+
 struct configSettings_t
 {
   int configVersion;
@@ -30,6 +33,10 @@ struct configSettings_t
 
   unsigned int dayLightThreshold;
 };
+
+configSettings_t settings;
+
+#endif
 
 // Default Access Point name and the password
 #define AP_NAME "LightingControllerAP"

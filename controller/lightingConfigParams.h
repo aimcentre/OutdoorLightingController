@@ -1,7 +1,14 @@
+#include "hardwareConfiguration.h"
+#include "LampSegment.h"
 
-// Lamp on/off output level 
-#define ON HIGH
-#define OFF LOW
+#ifndef LIGHTING_PARAMETERS
+#define LIGHTING_PARAMETERS
+
+volatile LampSegment gSegmentA(LAMP_PIN_A);
+volatile LampSegment gSegmentB(LAMP_PIN_B);
+volatile LampSegment gSegmentC(LAMP_PIN_C);
+volatile LampSegment gSegmentD(LAMP_PIN_D);
+volatile LampSegment gSegmentE(LAMP_PIN_E);
 
 // Data structure to keep track of when each motion sensor was triggered 
 struct sensorState_t
@@ -45,5 +52,5 @@ volatile int darknessLevel = 0;
 const char* host = "script.google.com";
 String url = "/macros/s/AKfycbzM92oEPPacHXdE_Aq_YEhMkFd3q18OkqaEyAQXNZSxR0JYIJUz/exec";
 
-
+#endif
  

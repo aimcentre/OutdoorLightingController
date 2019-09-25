@@ -10,7 +10,7 @@
 #include "systemConfigParams.h"
 #include "lightingConfigParams.h"
 
-configSettings_t settings;
+
 AsyncWebServer server(80);
 
 bool wifiInitialized = false;

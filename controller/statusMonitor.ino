@@ -21,12 +21,12 @@ void systemMonitorProcess(void * parameter) {
       if(darknessLevel > settings.dayLightThreshold)
       {
         solid(B_LED, 500);
-        Serial.printf("Ambient level: %d Threshold: %d Color: Blue\r\n", darknessLevel, settings.dayLightThreshold);
+        //Serial.printf("Ambient level: %d Threshold: %d Color: Blue\r\n", darknessLevel, settings.dayLightThreshold);
       }
       else
       {
         solid(G_LED, 500);
-        Serial.printf("Ambient darkness: %d Threshold: %d Color: Green\r\n", darknessLevel, settings.dayLightThreshold);
+        //Serial.printf("Ambient darkness: %d Threshold: %d Color: Green\r\n", darknessLevel, settings.dayLightThreshold);
       }
     }
 

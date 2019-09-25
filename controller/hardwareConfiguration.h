@@ -2,6 +2,9 @@
 // References: https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 //             https://wiki.keyestudio.com/KS0413_keyestudio_ESP32_Core_Board
 
+#ifndef HARDWARE_SETTINGS
+#define HARDWARE_SETTINGS
+
 #define AIN_1 35
 #define AIN_2 34
 #define AIN_3 39
@@ -34,8 +37,10 @@
 #define STATUS_B 4
 
 // Lamp-segment GPIO pin assignments
-#define LAMP_A 27
-#define LAMP_B 26
-#define LAMP_C 25
-#define LAMP_D 33
-#define LAMP_E 32
+#define LAMP_PIN_A 27
+#define LAMP_PIN_B 26
+#define LAMP_PIN_C 25
+#define LAMP_PIN_D 33
+#define LAMP_PIN_E 32
+
+#endif

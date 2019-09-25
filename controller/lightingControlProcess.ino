@@ -16,11 +16,14 @@ void IRAM_ATTR onMotionA()
   
   // Turnning on the lamp segment 1 immediately for the default duration
   turnLampSegmentOn(&lampState1, 0, settings.regularLampOnTime);
+  gSegmentA.Update(0, settings.regularLampOnTime);
 
   // Scheduling lamp segment 2 to turn on for the auxiliary interval after the inter-segment delay
   turnLampSegmentOn(&lampState2, settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+  gSegmentB.Update(settings.interSegmentDelay, settings.auxiliaryLampOnTime);
 
   portEXIT_CRITICAL(&timerMux);
+
 }
 
 void IRAM_ATTR onMotionB()
@@ -31,6 +34,8 @@ void IRAM_ATTR onMotionB()
   // Turnning on the lamp segments 1 and 2 immediately for the default duration
   turnLampSegmentOn(&lampState1, 0, settings.regularLampOnTime);
   turnLampSegmentOn(&lampState2, 0, settings.regularLampOnTime);
+  gSegmentA.Update(0, settings.regularLampOnTime);
+  gSegmentB.Update(0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -42,9 +47,11 @@ void IRAM_ATTR onMotionC()
   
   // Turnning on the lamp segment 2 immediately for the default duration
   turnLampSegmentOn(&lampState2, 0, settings.regularLampOnTime);
+  gSegmentB.Update(0, settings.regularLampOnTime);
 
   // Scheduling lamp segment 3 to turn on for the auxiliary interval shortly after
   turnLampSegmentOn(&lampState3, settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
+  gSegmentC.Update(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -56,9 +63,11 @@ void IRAM_ATTR onMotionD()
 
   // Turnning on the lamp segment 3 immediately for the default duration
   turnLampSegmentOn(&lampState3, 0, settings.regularLampOnTime);
+  gSegmentC.Update(0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment 4 immediately for the auxiliary interval
   turnLampSegmentOn(&lampState4, 0, settings.auxiliaryLampOnTime);
+  gSegmentD.Update(0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -70,9 +79,11 @@ void IRAM_ATTR onMotionE()
 
   // Turnning on the lamp segment 4 immediately for the default duration
   turnLampSegmentOn(&lampState4, 0, settings.regularLampOnTime);
+  gSegmentD.Update(0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment 3 immediately for the auxiliary interval
   turnLampSegmentOn(&lampState3, 0, settings.auxiliaryLampOnTime);
+  gSegmentC.Update(0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -84,16 +95,18 @@ void IRAM_ATTR onMotionF()
 
   // Turnning on the lamp segment 4 immediately for the default duration
   turnLampSegmentOn(&lampState4, 0, settings.regularLampOnTime);
+  gSegmentD.Update(0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
-
+/*
 void IRAM_ATTR onAccessPointPasswordResetBtnPressed()
 {
   portENTER_CRITICAL(&timerMux);
   accessPointPasswordResetBtnPressedTime = millis();
   portEXIT_CRITICAL(&timerMux);
 }
+*/
 
 void lightingControlProcess(void * parameter)
 {
@@ -109,7 +122,13 @@ void lightingControlProcess(void * parameter)
       
       // Locking the timer mutex, decrementing and coying lamp-state timer values, and releasing the mutex
       portENTER_CRITICAL(&timerMux);
-
+      gSegmentA.OnTick(ambientDarkness, settings.dayLightThreshold);
+      gSegmentB.OnTick(ambientDarkness, settings.dayLightThreshold);
+      gSegmentC.OnTick(ambientDarkness, settings.dayLightThreshold);
+      gSegmentD.OnTick(ambientDarkness, settings.dayLightThreshold);
+      gSegmentE.OnTick(ambientDarkness, settings.dayLightThreshold);
+      
+/*
       darknessLevel = ambientDarkness;
       segA.offset = lampState1.offset > 0 ? lampState1.offset-- : 0;
       if(segA.offset == 0)
@@ -130,9 +149,15 @@ void lightingControlProcess(void * parameter)
       segE.offset = lampState5.offset > 0 ? lampState5.offset-- : 0;
       if(segE.offset == 0)
         segE.period = lampState5.period > 0 ? lampState5.period-- : 0;
-
+*/
       portEXIT_CRITICAL(&timerMux);
 
+      gSegmentA.Execute();
+      gSegmentB.Execute();
+      gSegmentC.Execute();
+      gSegmentD.Execute();
+      gSegmentE.Execute();
+/*
       // Checking the new states of lamp segments depending on whether the corresponding timer values are positive or zero
       bool isNight = darknessLevel > settings.dayLightThreshold;
       bool turnOnA = isNight && segA.offset == 0 && segA.period > 0;
@@ -143,11 +168,11 @@ void lightingControlProcess(void * parameter)
 
       if(prevOnA != turnOnA || prevOnB != turnOnB || prevOnC != turnOnC || prevOnD != turnOnD || prevOnE != turnOnE)
       {
-        digitalWrite(LAMP_A, turnOnA ? ON : OFF);
-        digitalWrite(LAMP_B, turnOnB ? ON : OFF);
-        digitalWrite(LAMP_C, turnOnC ? ON : OFF);
-        digitalWrite(LAMP_D, turnOnD ? ON : OFF);
-        digitalWrite(LAMP_E, turnOnE ? ON : OFF);
+        digitalWrite(LAMP_PIN_A, turnOnA ? ON : OFF);
+        digitalWrite(LAMP_PIN_B, turnOnB ? ON : OFF);
+        digitalWrite(LAMP_PIN_C, turnOnC ? ON : OFF);
+        digitalWrite(LAMP_PIN_D, turnOnD ? ON : OFF);
+        digitalWrite(LAMP_PIN_E, turnOnE ? ON : OFF);
 
         Serial.printf("Segment A: %s, Segment B: %s, Segment C: %s, Segment D: %s, Segment E: %s\r\n", turnOnA ? "ON" : "OFF", turnOnB ? "ON" : "OFF", turnOnC ? "ON" : "OFF", turnOnD ? "ON" : "OFF", turnOnE ? "ON" : "OFF");
       }
@@ -157,6 +182,8 @@ void lightingControlProcess(void * parameter)
       prevOnC = turnOnC;
       prevOnD = turnOnD;
       prevOnE = turnOnE;
+*/
+      
     }
     else
       delay(10);
@@ -192,17 +219,17 @@ void initLightingControlSystem()
 
   pinMode(WIFI_RESET, INPUT);
 
-  pinMode(LAMP_A, OUTPUT);
-  pinMode(LAMP_B, OUTPUT);
-  pinMode(LAMP_C, OUTPUT);
-  pinMode(LAMP_D, OUTPUT);
-  pinMode(LAMP_E, OUTPUT);
+  pinMode(LAMP_PIN_A, OUTPUT);
+  pinMode(LAMP_PIN_B, OUTPUT);
+  pinMode(LAMP_PIN_C, OUTPUT);
+  pinMode(LAMP_PIN_D, OUTPUT);
+  pinMode(LAMP_PIN_E, OUTPUT);
 
-  digitalWrite(LAMP_A,  OFF);
-  digitalWrite(LAMP_B,  OFF);
-  digitalWrite(LAMP_C,  OFF);
-  digitalWrite(LAMP_D,  OFF);
-  digitalWrite(LAMP_E,  OFF);
+  digitalWrite(LAMP_PIN_A,  OFF);
+  digitalWrite(LAMP_PIN_B,  OFF);
+  digitalWrite(LAMP_PIN_C,  OFF);
+  digitalWrite(LAMP_PIN_D,  OFF);
+  digitalWrite(LAMP_PIN_E,  OFF);
 
   digitalWrite(STATUS_R,  OFF);
   digitalWrite(STATUS_G,  OFF);
@@ -227,15 +254,17 @@ void initLightingControlSystem()
   timerAlarmEnable(timer);
 
   // Setting up motion-sensor interrupts
-  attachInterrupt(MOTION_A, &onMotionA,   FALLING);
-  attachInterrupt(MOTION_B, &onMotionB,   FALLING);
-  attachInterrupt(MOTION_C, &onMotionC,   FALLING);
+  attachInterrupt(MOTION_A, &onMotionA, FALLING);
+  attachInterrupt(MOTION_B, &onMotionB, FALLING);
+  attachInterrupt(MOTION_C, &onMotionC, FALLING);
   attachInterrupt(MOTION_D, &onMotionD, FALLING);
   attachInterrupt(MOTION_E, &onMotionE, FALLING);
   attachInterrupt(MOTION_F, &onMotionF, FALLING);
 
+/*
   // Setting up Access Point password-reset inturrupt
   attachInterrupt(WIFI_RESET, &onAccessPointPasswordResetBtnPressed, FALLING);
+*/
 
   // Turnning all lamps for 5 second
   turnLampSegmentOn(&lampState1, 0, 5);
@@ -243,6 +272,12 @@ void initLightingControlSystem()
   turnLampSegmentOn(&lampState3, 0, 5);
   turnLampSegmentOn(&lampState4, 0, 5);
   turnLampSegmentOn(&lampState5, 0, 5);
+  gSegmentA.Update(0, 5);
+  gSegmentB.Update(0, 5);
+  gSegmentC.Update(0, 5);
+  gSegmentD.Update(0, 5);
+  gSegmentE.Update(0, 5);
+  
   
 }
 
