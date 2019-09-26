@@ -112,6 +112,8 @@ void lightingControlProcess(void * parameter)
       gSegmentC.OnTick(ambientDarkness, settings.dayLightThreshold);
       gSegmentD.OnTick(ambientDarkness, settings.dayLightThreshold);
       gSegmentE.OnTick(ambientDarkness, settings.dayLightThreshold);
+
+      darknessLevel = ambientDarkness;
       portEXIT_CRITICAL(&timerMux);
 
       //Turning on and off lamps as necessary
