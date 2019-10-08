@@ -13,10 +13,10 @@ void IRAM_ATTR onMotionA()
   sensorTriggerTimestamps.clockA = millis();
   
   // Turnning on the lamp segment A immediately for the default duration
-  gSegmentA.Update(0, settings.regularLampOnTime);
+  gSegmentA.ScheduleCycle(0, settings.regularLampOnTime);
 
   // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
-  gSegmentB.Update(settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+  gSegmentB.ScheduleCycle(settings.interSegmentDelay, settings.auxiliaryLampOnTime);
 
   portEXIT_CRITICAL(&timerMux);
 
@@ -28,8 +28,8 @@ void IRAM_ATTR onMotionB()
   sensorTriggerTimestamps.clockB = millis();
 
   // Turnning on the lamp segments A and B immediately for the default duration
-  gSegmentA.Update(0, settings.regularLampOnTime);
-  gSegmentB.Update(0, settings.regularLampOnTime);
+  gSegmentA.ScheduleCycle(0, settings.regularLampOnTime);
+  gSegmentB.ScheduleCycle(0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -40,10 +40,10 @@ void IRAM_ATTR onMotionC()
   sensorTriggerTimestamps.clockC = millis();
   
   // Turnning on the lamp segment B immediately for the default duration
-  gSegmentB.Update(0, settings.regularLampOnTime);
+  gSegmentB.ScheduleCycle(0, settings.regularLampOnTime);
 
   // Scheduling lamp segment C to turn on for the auxiliary interval shortly after
-  gSegmentC.Update(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
+  gSegmentC.ScheduleCycle(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -54,10 +54,10 @@ void IRAM_ATTR onMotionD()
   sensorTriggerTimestamps.clockD = millis();
 
   // Turnning on the lamp segment C immediately for the default duration
-  gSegmentC.Update(0, settings.regularLampOnTime);
+  gSegmentC.ScheduleCycle(0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment D immediately for the auxiliary interval
-  gSegmentD.Update(0, settings.auxiliaryLampOnTime);
+  gSegmentD.ScheduleCycle(0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -68,10 +68,10 @@ void IRAM_ATTR onMotionE()
   sensorTriggerTimestamps.clockE = millis();
 
   // Turnning on the lamp segment D immediately for the default duration
-  gSegmentD.Update(0, settings.regularLampOnTime);
+  gSegmentD.ScheduleCycle(0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment C immediately for the auxiliary interval
-  gSegmentC.Update(0, settings.auxiliaryLampOnTime);
+  gSegmentC.ScheduleCycle(0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -82,7 +82,7 @@ void IRAM_ATTR onMotionF()
   sensorTriggerTimestamps.clockF = millis();
 
   // Turnning on the lamp segment D immediately for the default duration
-  gSegmentD.Update(0, settings.regularLampOnTime);
+  gSegmentD.ScheduleCycle(0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -205,11 +205,11 @@ void initLightingControlSystem()
 */
 
   // Turnning all lamps for 5 second
-  gSegmentA.Update(0, 5);
-  gSegmentB.Update(0, 5);
-  gSegmentC.Update(0, 5);
-  gSegmentD.Update(0, 5);
-  gSegmentE.Update(0, 5);
+  gSegmentA.ScheduleCycle(0, 5);
+  gSegmentB.ScheduleCycle(0, 5);
+  gSegmentC.ScheduleCycle(0, 5);
+  gSegmentD.ScheduleCycle(0, 5);
+  gSegmentE.ScheduleCycle(0, 5);
   
   
 }

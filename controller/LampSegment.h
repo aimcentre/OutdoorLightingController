@@ -1,8 +1,14 @@
+#ifndef _LAMP_SEGMENT_H
+#define _LAMP_SEGMENT_H
+
+#include "systemConfigParams.h"
+#include "LampCycle.h"
+
 // Lamp on/off output level 
 #define ON HIGH
 #define OFF LOW
 
-#include "systemConfigParams.h"
+#define BUFFER_SIZE 50
 
 class LampSegment
 {
@@ -14,51 +20,69 @@ class LampSegment
   bool mLampStatus;
   bool mPrevLampStatus;
 
+  LampCycle mLampCycleList[BUFFER_SIZE];
+
   public:
   LampSegment(unsigned int outputPin)
   {
     mOutputPin = outputPin;
-    mOffset = 0;
-    mPeriod = 0;
-    mAmbientDarkness - 0;
+    mAmbientDarkness = 0;
     mLampStatus = OFF;
     mPrevLampStatus = OFF;
   }
 
-  void Update(unsigned int offset, unsigned int period) volatile
-  {    
-    if(mPeriod == 0)
+  public:
+  /// ScheduleCycle: Updates the pLampCycleList by either modifying the timing of an existing LampCycle object
+  /// in the list or by inserting a new LampCycle object. This method makes sure that the segment is turned on
+  /// from the given time period starting from the given time offset 
+  void ScheduleCycle(unsigned int offset, unsigned int period) volatile
+  {
+    //Finding a LampCycle which has an overlapping "on" time with the given period starting from the given offset.
+    volatile LampCycle* targetLampCycle = 0;
+    
+    for(int i=0; i<BUFFER_SIZE; ++i)
     {
-      // Segment is currently off, so set it to turn on for the given period after the given delay.
-      mOffset = offset;
-      mPeriod = period;
+      if(mLampCycleList[i].mOffset <= offset && (mLampCycleList[i].mOffset + mLampCycleList[i].mPeriod) >= offset)
+      {
+        targetLampCycle = &mLampCycleList[i];
+        break;
+      }
+    }
+
+    if(targetLampCycle == 0)
+    {
+      //No overlapping cycle found, so update the first LamCycle which is already done, or the last one in the buffer if nothing is done.
+      for(int i=0; i<BUFFER_SIZE; ++i)
+      {
+        if(mLampCycleList[i].GetStatus() == LampCycle::eCycleState::DONE)
+        {
+          targetLampCycle = &mLampCycleList[i];
+          break;
+        }
+
+        if(targetLampCycle == 0)
+        {
+          targetLampCycle = &mLampCycleList[BUFFER_SIZE - 1];
+        }
+      }
+      targetLampCycle->mOffset = offset;
+      targetLampCycle->mPeriod = period;
+      //Serial.println("Added new cycle");
+      
     }
     else
     {
-      // The segment is either currently on or it is scheduled to be on
+      //Serial.println("Updating existing cycle");
       
-      if(mOffset == 0)
-      {
-        // Segment is currently turned on. Keep it turned on for current period or the given offset+period, whichever is longer
-        unsigned t = offset + period;
-        if(t > mPeriod)
-          mPeriod = t;
-      }
-      else
-      {
-        // The segment is scheduled to be turned on after the delay specified by mOffset. 
-        // Turn it on after that delay or the given offset, whichever is smaller,
-        // and then keep it on past the scheduled period or the the given offset+period, whichever is larger
-        int time_to_turn_off = max(mOffset + mPeriod, offset + period);
-        if(offset < mOffset)
-          mOffset = offset;
-        mPeriod = time_to_turn_off - mOffset;
-      }
+      //Overlapping cycle found. Adjust it's timing to make sure the cycle covers the given period from the given offset
+      int time_to_turn_on = targetLampCycle->mOffset < offset ? targetLampCycle->mOffset : offset;
+      int time_to_turn_off = max(targetLampCycle->mOffset + targetLampCycle->mPeriod, offset + period);
+      targetLampCycle->mOffset = time_to_turn_on;
+      targetLampCycle->mPeriod = time_to_turn_off - time_to_turn_on;
     }
-
-    Serial.printf("Lamp %d: Offset = %d, Period = %d\r\n", this, mOffset, mPeriod);
+    
   }
-
+  
   void Execute() volatile
   {
     if(mPrevLampStatus != mLampStatus)
@@ -70,23 +94,32 @@ class LampSegment
   }
 
   void OnTick(unsigned int ambientDarkness, unsigned int darknessThreshold) volatile
-  {
-    if(mOffset > 0)
-      --mOffset;
+  {     
+    //Invoking OnTick() of eachLampCycle to update their offsets and periods as necessary. 
+    // Also checking whether there is at least one active LampCycle exists after updating
+    bool activeCycleFound = false;
+    for(int i=0; i<BUFFER_SIZE; ++i)    
+    {
+      mLampCycleList[i].OnTick();
 
-    if(mOffset == 0 && mPeriod > 0)
-      --mPeriod;
+      if(activeCycleFound == false && mLampCycleList[i].GetStatus() == LampCycle::eCycleState::ACTIVE)
+        activeCycleFound = true;
+    }
 
     mAmbientDarkness = ambientDarkness;
-    mLampStatus = (ambientDarkness > darknessThreshold && mOffset == 0 && mPeriod > 0) ? ON : OFF;
-
-    Serial.printf("OnTick() called; Offset: %d, Period: %d, Lamp Status = %s\r\n", mOffset, mPeriod, mLampStatus == ON ? "ON" : "OFF");
+    mLampStatus = (ambientDarkness > darknessThreshold && activeCycleFound) ? ON : OFF;
   }
 
   void Reset() volatile
   {
-    mOffset = 0;
-    mPeriod = 0;
+    //Clearing the all LampCycle objects in the buffer
+    for(int i=0; i<BUFFER_SIZE; ++i)
+    {
+      mLampCycleList[i].mOffset= 0;
+      mLampCycleList[i].mPeriod= 0;
+    }
   }
   
 };
+
+#endif
