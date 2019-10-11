@@ -38,6 +38,12 @@ class LampCycle
     else
       return eCycleState::DONE;
   }
+
+  void Reset() volatile
+  {
+    mOffset = 0;
+    mPeriod = 0;
+  }
 };
 
 #endif

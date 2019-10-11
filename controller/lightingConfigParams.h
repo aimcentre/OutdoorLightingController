@@ -19,12 +19,15 @@ struct sensorState_t
   unsigned long clockD;
   unsigned long clockE;
   unsigned long clockF;
+  unsigned long clockG;  
 };
 
 // Lighting control data structures and interrupt timer variables
-hw_timer_t * timer = NULL;
+hw_timer_t* timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 volatile SemaphoreHandle_t timerSemaphore;
+
+hw_timer_t* lampScheduleTimer = NULL;
 
 volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
 

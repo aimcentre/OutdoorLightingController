@@ -13,10 +13,10 @@ void IRAM_ATTR onMotionA()
   sensorTriggerTimestamps.clockA = millis();
   
   // Turnning on the lamp segment A immediately for the default duration
-  gSegmentA.ScheduleCycle(0, settings.regularLampOnTime);
+  gSegmentA.Trigger(0, settings.regularLampOnTime);
 
   // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
-  gSegmentB.ScheduleCycle(settings.interSegmentDelay, settings.auxiliaryLampOnTime);
+  gSegmentB.Trigger(settings.interSegmentDelay, settings.auxiliaryLampOnTime);
 
   portEXIT_CRITICAL(&timerMux);
 
@@ -28,8 +28,8 @@ void IRAM_ATTR onMotionB()
   sensorTriggerTimestamps.clockB = millis();
 
   // Turnning on the lamp segments A and B immediately for the default duration
-  gSegmentA.ScheduleCycle(0, settings.regularLampOnTime);
-  gSegmentB.ScheduleCycle(0, settings.regularLampOnTime);
+  gSegmentA.Trigger(0, settings.regularLampOnTime);
+  gSegmentB.Trigger(0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -40,10 +40,10 @@ void IRAM_ATTR onMotionC()
   sensorTriggerTimestamps.clockC = millis();
   
   // Turnning on the lamp segment B immediately for the default duration
-  gSegmentB.ScheduleCycle(0, settings.regularLampOnTime);
+  gSegmentB.Trigger(0, settings.regularLampOnTime);
 
   // Scheduling lamp segment C to turn on for the auxiliary interval shortly after
-  gSegmentC.ScheduleCycle(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
+  gSegmentC.Trigger(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -54,10 +54,10 @@ void IRAM_ATTR onMotionD()
   sensorTriggerTimestamps.clockD = millis();
 
   // Turnning on the lamp segment C immediately for the default duration
-  gSegmentC.ScheduleCycle(0, settings.regularLampOnTime);
+  gSegmentC.Trigger(0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment D immediately for the auxiliary interval
-  gSegmentD.ScheduleCycle(0, settings.auxiliaryLampOnTime);
+  gSegmentD.Trigger(0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -68,10 +68,10 @@ void IRAM_ATTR onMotionE()
   sensorTriggerTimestamps.clockE = millis();
 
   // Turnning on the lamp segment D immediately for the default duration
-  gSegmentD.ScheduleCycle(0, settings.regularLampOnTime);
+  gSegmentD.Trigger(0, settings.regularLampOnTime);
 
   // Turnning on the lamp segment C immediately for the auxiliary interval
-  gSegmentC.ScheduleCycle(0, settings.auxiliaryLampOnTime);
+  gSegmentC.Trigger(0, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
@@ -82,10 +82,22 @@ void IRAM_ATTR onMotionF()
   sensorTriggerTimestamps.clockF = millis();
 
   // Turnning on the lamp segment D immediately for the default duration
-  gSegmentD.ScheduleCycle(0, settings.regularLampOnTime);
+  gSegmentD.Trigger(0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&timerMux);
 }
+
+void IRAM_ATTR onMotionG()
+{
+  portENTER_CRITICAL(&timerMux);
+  sensorTriggerTimestamps.clockG = millis();
+
+  // Turnning on the lamp segments B immediately for the default duration
+  gSegmentB.Trigger(0, settings.regularLampOnTime);
+  
+  portEXIT_CRITICAL(&timerMux);
+}
+
 /*
 void IRAM_ATTR onAccessPointPasswordResetBtnPressed()
 {
@@ -191,6 +203,13 @@ void initLightingControlSystem()
   // Start an alarm
   timerAlarmEnable(timer);
 
+  // Initializing the lamp-schedule timer
+  lampScheduleTimer = timerBegin(1, 80, true);
+  timerAttachInterrupt(lampScheduleTimer, &fetchSchedule, true);
+  timerAlarmWrite(lampScheduleTimer, 2000000, true);
+  timerAlarmEnable(lampScheduleTimer);
+
+
   // Setting up motion-sensor interrupts
   attachInterrupt(MOTION_A, &onMotionA, FALLING);
   attachInterrupt(MOTION_B, &onMotionB, FALLING);
@@ -198,6 +217,7 @@ void initLightingControlSystem()
   attachInterrupt(MOTION_D, &onMotionD, FALLING);
   attachInterrupt(MOTION_E, &onMotionE, FALLING);
   attachInterrupt(MOTION_F, &onMotionF, FALLING);
+  attachInterrupt(MOTION_G, &onMotionG, FALLING);
 
 /*
   // Setting up Access Point password-reset inturrupt
@@ -205,11 +225,22 @@ void initLightingControlSystem()
 */
 
   // Turnning all lamps for 5 second
-  gSegmentA.ScheduleCycle(0, 5);
-  gSegmentB.ScheduleCycle(0, 5);
-  gSegmentC.ScheduleCycle(0, 5);
-  gSegmentD.ScheduleCycle(0, 5);
-  gSegmentE.ScheduleCycle(0, 5);
+  gSegmentA.Trigger(0, 5);
+  gSegmentB.Trigger(0, 5);
+  gSegmentC.Trigger(0, 5);
+  gSegmentD.Trigger(0, 5);
+  gSegmentE.Trigger(0, 5);
   
   
+}
+
+void fetchSchedule()
+{
+  const char* timeAPI = "http://worldtimeapi.org/api/timezone/America/Edmonton";
+  
+  Serial.println("Fetching schedule ...");
+  
+  if(WiFi.status() == WL_CONNECTED)
+  {
+  }
 }
