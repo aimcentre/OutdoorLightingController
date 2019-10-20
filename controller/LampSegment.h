@@ -62,7 +62,7 @@ class LampSegment
   /// ScheduleCycle: Updates the pLampCycleList by either modifying the timing of an existing LampCycle object
   /// in the list or by inserting a new LampCycle object. This method makes sure that the segment is turned on
   /// from the given time period starting from the given time offset 
-  void ScheduleCyclex(unsigned int offset, unsigned int period) volatile
+  void ScheduleCycle(unsigned int offset, unsigned int period) volatile
   {
     //Finding a LampCycle which has an overlapping "on" time with the given period starting from the given offset.
     int targetLampCycleIndex = -1;
