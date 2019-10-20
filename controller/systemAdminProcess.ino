@@ -81,6 +81,7 @@ void systemAdminProcess(void * parameter) {
       currentSensorStates.clockD = sensorTriggerTimestamps.clockD;
       currentSensorStates.clockE = sensorTriggerTimestamps.clockE;
       currentSensorStates.clockF = sensorTriggerTimestamps.clockF;
+      currentSensorStates.clockG = sensorTriggerTimestamps.clockG;
       portEXIT_CRITICAL(&timerMux);
       
       if(prevSensorStates.clockA != currentSensorStates.clockA ||
@@ -88,7 +89,8 @@ void systemAdminProcess(void * parameter) {
          prevSensorStates.clockC != currentSensorStates.clockC ||
          prevSensorStates.clockD != currentSensorStates.clockD ||
          prevSensorStates.clockE != currentSensorStates.clockE ||
-         prevSensorStates.clockF != currentSensorStates.clockF)
+         prevSensorStates.clockF != currentSensorStates.clockF ||
+         prevSensorStates.clockG != currentSensorStates.clockG)
        {
           WiFiClientSecure client;
           const int httpPort = 443;
@@ -97,12 +99,13 @@ void systemAdminProcess(void * parameter) {
             return;
           }
           float temperature = getTemperature();
-          String params = String("?m1=") + currentSensorStates.clockA + 
-                          "&m2=" + currentSensorStates.clockB + 
-                          "&m3=" + currentSensorStates.clockC + 
-                          "&m4=" + currentSensorStates.clockD + 
-                          "&m5=" + currentSensorStates.clockE + 
-                          "&m6=" + currentSensorStates.clockF + 
+          String params = String("?mA=") + currentSensorStates.clockA + 
+                          "&mB=" + currentSensorStates.clockB + 
+                          "&mC=" + currentSensorStates.clockC + 
+                          "&mD=" + currentSensorStates.clockD + 
+                          "&mE=" + currentSensorStates.clockE + 
+                          "&mF=" + currentSensorStates.clockF + 
+                          "&mG=" + currentSensorStates.clockG + 
                           "&d=" + ambientDarkness + 
                           "&t=" + temperature;
           String dataEncodedUrl = url + params;
@@ -117,6 +120,7 @@ void systemAdminProcess(void * parameter) {
           prevSensorStates.clockD = currentSensorStates.clockD;
           prevSensorStates.clockE = currentSensorStates.clockE;
           prevSensorStates.clockF = currentSensorStates.clockF;
+          prevSensorStates.clockG = currentSensorStates.clockG;
        }
    }
    
