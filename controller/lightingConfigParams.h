@@ -1,5 +1,6 @@
 #include "hardwareConfiguration.h"
 #include "LampSegment.h"
+#include "MotionSensor.h"
 
 #ifndef LIGHTING_PARAMETERS
 #define LIGHTING_PARAMETERS
@@ -9,6 +10,14 @@ volatile LampSegment gSegmentB(LAMP_PIN_B);
 volatile LampSegment gSegmentC(LAMP_PIN_C);
 volatile LampSegment gSegmentD(LAMP_PIN_D);
 volatile LampSegment gSegmentE(LAMP_PIN_E);
+
+volatile MotionSensor gSensorA(MOTION_A);
+volatile MotionSensor gSensorB(MOTION_B);
+volatile MotionSensor gSensorC(MOTION_C);
+volatile MotionSensor gSensorD(MOTION_D);
+volatile MotionSensor gSensorE(MOTION_E);
+volatile MotionSensor gSensorF(MOTION_F);
+volatile MotionSensor gSensorG(MOTION_G);
 
 // Data structure to keep track of when each motion sensor was triggered 
 struct sensorState_t
@@ -24,7 +33,7 @@ struct sensorState_t
 
 // Lighting control data structures and interrupt timer variables
 hw_timer_t* timer = NULL;
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE resourceLock = portMUX_INITIALIZER_UNLOCKED;
 volatile SemaphoreHandle_t timerSemaphore;
 
 hw_timer_t* lampScheduleTimer = NULL;

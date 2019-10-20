@@ -73,7 +73,7 @@ void systemAdminProcess(void * parameter) {
    if(WiFi.status() == WL_CONNECTED)
    {
       int ambientDarkness = 0;
-      portENTER_CRITICAL(&timerMux);
+      portENTER_CRITICAL(&resourceLock);
       ambientDarkness = darknessLevel;
       currentSensorStates.clockA = sensorTriggerTimestamps.clockA;
       currentSensorStates.clockB = sensorTriggerTimestamps.clockB;
@@ -82,7 +82,7 @@ void systemAdminProcess(void * parameter) {
       currentSensorStates.clockE = sensorTriggerTimestamps.clockE;
       currentSensorStates.clockF = sensorTriggerTimestamps.clockF;
       currentSensorStates.clockG = sensorTriggerTimestamps.clockG;
-      portEXIT_CRITICAL(&timerMux);
+      portEXIT_CRITICAL(&resourceLock);
       
       if(prevSensorStates.clockA != currentSensorStates.clockA ||
          prevSensorStates.clockB != currentSensorStates.clockB ||

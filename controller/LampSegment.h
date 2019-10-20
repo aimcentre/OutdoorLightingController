@@ -8,7 +8,7 @@
 #define ON HIGH
 #define OFF LOW
 
-#define BUFFER_SIZE 50
+#define LAMP_CYCLE_BUFFER_SIZE 50
 
 class LampSegment
 {
@@ -20,7 +20,7 @@ class LampSegment
   bool mLampStatus;
   bool mPrevLampStatus;
 
-  volatile LampCycle mLampCycleList[BUFFER_SIZE];
+  volatile LampCycle mLampCycleList[LAMP_CYCLE_BUFFER_SIZE];
 
   public:
   LampSegment(unsigned int outputPin)
@@ -66,7 +66,7 @@ class LampSegment
   {
     //Finding a LampCycle which has an overlapping "on" time with the given period starting from the given offset.
     int targetLampCycleIndex = -1;
-    for(int i=0; i<BUFFER_SIZE; ++i)
+    for(int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
     {
       if(mLampCycleList[i].mOffset <= offset && (mLampCycleList[i].mOffset + mLampCycleList[i].mPeriod) >= offset)
       {
@@ -78,7 +78,7 @@ class LampSegment
     if(targetLampCycleIndex == -1)
     {
       //No overlapping cycle found, so update the first LampCycle which is already done, or the last one in the buffer if nothing is done.
-      for(int i=0; i<BUFFER_SIZE; ++i)
+      for(int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
       {
         if(mLampCycleList[i].GetStatus() == LampCycle::eCycleState::DONE)
         {
@@ -90,7 +90,7 @@ class LampSegment
       if(targetLampCycleIndex == -1)
       {
         // There are no LampCycle objects which are in "done" state in the buffer. Select the last object and firce it to be done by resetting it.
-        targetLampCycleIndex = BUFFER_SIZE - 1;
+        targetLampCycleIndex = LAMP_CYCLE_BUFFER_SIZE - 1;
         mLampCycleList[targetLampCycleIndex].Reset();
       }
     }
@@ -98,22 +98,12 @@ class LampSegment
     UpdateLampCycle(targetLampCycleIndex, offset, period);    
   }
   
-  void Execute() volatile
-  {
-    if(mPrevLampStatus != mLampStatus)
-    {
-      digitalWrite(mOutputPin, mLampStatus);
-      mPrevLampStatus = mLampStatus;
-    }
-    
-  }
-
   void OnTick(unsigned int ambientDarkness, unsigned int darknessThreshold) volatile
   {     
     //Invoking OnTick() of eachLampCycle to update their offsets and periods as necessary. 
     // Also checking whether there is at least one active LampCycle exists after updating
     bool activeCycleFound = false;
-    for(int i=0; i<BUFFER_SIZE; ++i)    
+    for(int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)    
     {
       mLampCycleList[i].OnTick();
 
@@ -125,10 +115,20 @@ class LampSegment
     mLampStatus = (ambientDarkness > darknessThreshold && activeCycleFound) ? ON : OFF;
   }
 
+  void Execute() volatile
+  {
+    if(mPrevLampStatus != mLampStatus)
+    {
+      digitalWrite(mOutputPin, mLampStatus);
+      mPrevLampStatus = mLampStatus;
+    }
+    
+  }
+
   void Reset() volatile
   {
     //Clearing the all LampCycle objects in the buffer
-    for(int i=0; i<BUFFER_SIZE; ++i)
+    for(int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
       mLampCycleList[i].Reset();
   }
   

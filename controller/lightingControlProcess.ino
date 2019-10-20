@@ -9,7 +9,8 @@ void IRAM_ATTR onTimer()
 
 void IRAM_ATTR onMotionA()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
+  gSensorA.Trigger();
   sensorTriggerTimestamps.clockA = millis();
   
   // Turnning on the lamp segment A immediately for the default duration
@@ -18,25 +19,27 @@ void IRAM_ATTR onMotionA()
   // Scheduling lamp segment B to turn on for the auxiliary interval after the inter-segment delay
   gSegmentB.Trigger(settings.interSegmentDelay, settings.auxiliaryLampOnTime);
 
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 
 }
 
 void IRAM_ATTR onMotionB()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
+  gSensorB.Trigger();
   sensorTriggerTimestamps.clockB = millis();
 
   // Turnning on the lamp segments A and B immediately for the default duration
   gSegmentA.Trigger(0, settings.regularLampOnTime);
   gSegmentB.Trigger(0, settings.regularLampOnTime);
   
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 }
 
 void IRAM_ATTR onMotionC()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
+  gSensorC.Trigger();
   sensorTriggerTimestamps.clockC = millis();
   
   // Turnning on the lamp segment B immediately for the default duration
@@ -45,12 +48,13 @@ void IRAM_ATTR onMotionC()
   // Scheduling lamp segment C to turn on for the auxiliary interval shortly after
   gSegmentC.Trigger(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
   
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 }
 
 void IRAM_ATTR onMotionD()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
+  gSensorD.Trigger();
   sensorTriggerTimestamps.clockD = millis();
 
   // Turnning on the lamp segment C immediately for the default duration
@@ -59,12 +63,13 @@ void IRAM_ATTR onMotionD()
   // Turnning on the lamp segment D immediately for the auxiliary interval
   gSegmentD.Trigger(0, settings.auxiliaryLampOnTime);
   
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 }
 
 void IRAM_ATTR onMotionE()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
+  gSensorE.Trigger();
   sensorTriggerTimestamps.clockE = millis();
 
   // Turnning on the lamp segment D immediately for the default duration
@@ -73,37 +78,39 @@ void IRAM_ATTR onMotionE()
   // Turnning on the lamp segment C immediately for the auxiliary interval
   gSegmentC.Trigger(0, settings.auxiliaryLampOnTime);
   
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 }
 
 void IRAM_ATTR onMotionF()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
+  gSensorF.Trigger();
   sensorTriggerTimestamps.clockF = millis();
 
   // Turnning on the lamp segment D immediately for the default duration
   gSegmentD.Trigger(0, settings.regularLampOnTime);
   
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 }
 
 void IRAM_ATTR onMotionG()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
+  gSensorG.Trigger();
   sensorTriggerTimestamps.clockG = millis();
 
   // Turnning on the lamp segments B immediately for the default duration
   gSegmentB.Trigger(0, settings.regularLampOnTime);
   
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 }
 
 /*
 void IRAM_ATTR onAccessPointPasswordResetBtnPressed()
 {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&resourceLock);
   accessPointPasswordResetBtnPressedTime = millis();
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&resourceLock);
 }
 */
 
@@ -118,7 +125,7 @@ void lightingControlProcess(void * parameter)
       int ambientDarkness = getDarknessLevel();
       
       // Locking the timer mutex, decrementing and coying lamp-state timer values, and releasing the mutex
-      portENTER_CRITICAL(&timerMux);
+      portENTER_CRITICAL(&resourceLock);
       gSegmentA.OnTick(ambientDarkness, settings.dayLightThreshold);
       gSegmentB.OnTick(ambientDarkness, settings.dayLightThreshold);
       gSegmentC.OnTick(ambientDarkness, settings.dayLightThreshold);
@@ -126,7 +133,7 @@ void lightingControlProcess(void * parameter)
       gSegmentE.OnTick(ambientDarkness, settings.dayLightThreshold);
 
       darknessLevel = ambientDarkness;
-      portEXIT_CRITICAL(&timerMux);
+      portEXIT_CRITICAL(&resourceLock);
 
       //Turning on and off lamps as necessary
       gSegmentA.Execute();
