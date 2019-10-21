@@ -120,11 +120,20 @@ void lightingControlProcess(void * parameter)
       portEXIT_CRITICAL(&resourceLock);
 
       //Turning on and off lamps as necessary
-      gSegmentA.Execute();
-      gSegmentB.Execute();
-      gSegmentC.Execute();
-      gSegmentD.Execute();
-      gSegmentE.Execute();
+      if(gSegmentA.Execute())
+        gReport.AddAction(gSegmentA.GetStatus() == ON ? Report::eAction::L1_ON : Report::eAction::L1_OFF);
+      
+      if(gSegmentB.Execute())
+        gReport.AddAction(gSegmentB.GetStatus() == ON ? Report::eAction::L2_ON : Report::eAction::L2_OFF);
+
+      if(gSegmentC.Execute())
+        gReport.AddAction(gSegmentC.GetStatus() == ON ? Report::eAction::L3_ON : Report::eAction::L3_OFF);
+
+      if(gSegmentD.Execute())
+        gReport.AddAction(gSegmentD.GetStatus() == ON ? Report::eAction::L4_ON : Report::eAction::L4_OFF);
+
+       if(gSegmentE.Execute())
+        gReport.AddAction(gSegmentE.GetStatus() == ON ? Report::eAction::L5_ON : Report::eAction::L5_OFF);      
     }
     else
       delay(10);

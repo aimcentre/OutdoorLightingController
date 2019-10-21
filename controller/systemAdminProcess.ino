@@ -123,10 +123,12 @@ void systemAdminProcess(void * parameter) {
               case Report::eAction::L2_ON: params = params  + "&s2=1"; break;
               case Report::eAction::L3_ON: params = params  + "&s3=1"; break;
               case Report::eAction::L4_ON: params = params  + "&s4=1"; break;
+              case Report::eAction::L5_ON: params = params  + "&s5=1"; break;
               case Report::eAction::L1_OFF: params = params + "&s1=0"; break;
               case Report::eAction::L2_OFF: params = params + "&s2=0"; break;
               case Report::eAction::L3_OFF: params = params + "&s3=0"; break;
               case Report::eAction::L4_OFF: params = params + "&s4=0"; break;
+              case Report::eAction::L5_OFF: params = params + "&s5=0"; break;
                 
             }
 

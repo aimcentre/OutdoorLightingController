@@ -129,6 +129,11 @@ class LampSegment
     return false;    
   }
 
+  unsigned int GetStatus() volatile
+  {
+    return mLampStatus;
+  }
+
   void Reset() volatile
   {
     //Clearing the all LampCycle objects in the buffer
