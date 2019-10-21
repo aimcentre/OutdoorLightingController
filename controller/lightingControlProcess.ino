@@ -145,12 +145,13 @@ void lightingControlProcess(void * parameter)
         actions[4] = Report::eAction::NONE;
 
       portENTER_CRITICAL(&resourceLock);
-        for(int i=0; i<5; ++i)
-        {
-          if(actions[i] != Report::eAction::NONE)
-            gReport.AddAction(actions[i]);
-        }
+      for(int i=0; i<5; ++i)
+      {
+        if(actions[i] != Report::eAction::NONE)
+          gReport.AddAction(actions[i]);
+      }
       portEXIT_CRITICAL(&resourceLock);
+      
 /*  
       
       {
