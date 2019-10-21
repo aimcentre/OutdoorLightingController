@@ -3,6 +3,7 @@
 
 #include "systemConfigParams.h"
 #include "LampCycle.h"
+#include "Report.h"
 
 // Lamp on/off output level 
 #define ON HIGH
@@ -19,7 +20,7 @@ class LampSegment
   unsigned int mAmbientDarkness;
   bool mLampStatus;
   bool mPrevLampStatus;
-
+  
   volatile LampCycle mLampCycleList[LAMP_CYCLE_BUFFER_SIZE];
 
   public:
@@ -115,14 +116,17 @@ class LampSegment
     mLampStatus = (ambientDarkness > darknessThreshold && activeCycleFound) ? ON : OFF;
   }
 
-  void Execute() volatile
+  bool Execute() volatile
   {
     if(mPrevLampStatus != mLampStatus)
     {
       digitalWrite(mOutputPin, mLampStatus);
       mPrevLampStatus = mLampStatus;
+
+      return true;
     }
     
+    return false;    
   }
 
   void Reset() volatile

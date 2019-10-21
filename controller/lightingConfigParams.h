@@ -1,23 +1,18 @@
 #include "hardwareConfiguration.h"
 #include "LampSegment.h"
-#include "MotionSensor.h"
+#include "Report.h"
 
 #ifndef LIGHTING_PARAMETERS
 #define LIGHTING_PARAMETERS
 
+                
 volatile LampSegment gSegmentA(LAMP_PIN_A);
 volatile LampSegment gSegmentB(LAMP_PIN_B);
 volatile LampSegment gSegmentC(LAMP_PIN_C);
 volatile LampSegment gSegmentD(LAMP_PIN_D);
 volatile LampSegment gSegmentE(LAMP_PIN_E);
 
-volatile MotionSensor gSensorA(MOTION_A);
-volatile MotionSensor gSensorB(MOTION_B);
-volatile MotionSensor gSensorC(MOTION_C);
-volatile MotionSensor gSensorD(MOTION_D);
-volatile MotionSensor gSensorE(MOTION_E);
-volatile MotionSensor gSensorF(MOTION_F);
-volatile MotionSensor gSensorG(MOTION_G);
+volatile Report gReport;
 
 // Data structure to keep track of when each motion sensor was triggered 
 struct sensorState_t
@@ -38,7 +33,7 @@ volatile SemaphoreHandle_t timerSemaphore;
 
 hw_timer_t* lampScheduleTimer = NULL;
 
-volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
+////////volatile sensorState_t sensorTriggerTimestamps{0, 0, 0, 0, 0, 0};
 
 volatile unsigned long accessPointPasswordResetBtnPressedTime = 0;
 volatile bool accessPointPasswordResetComplete = false;

@@ -73,17 +73,17 @@ void systemAdminProcess(void * parameter) {
    if(WiFi.status() == WL_CONNECTED)
    {
       int ambientDarkness = 0;
+      Report::eAction actions[REPORT_BUFFER_SIZE];
+      unsigned long timestamps[REPORT_BUFFER_SIZE];
+      int numReportEntries = 0;
+      
       portENTER_CRITICAL(&resourceLock);
       ambientDarkness = darknessLevel;
-      currentSensorStates.clockA = sensorTriggerTimestamps.clockA;
-      currentSensorStates.clockB = sensorTriggerTimestamps.clockB;
-      currentSensorStates.clockC = sensorTriggerTimestamps.clockC;
-      currentSensorStates.clockD = sensorTriggerTimestamps.clockD;
-      currentSensorStates.clockE = sensorTriggerTimestamps.clockE;
-      currentSensorStates.clockF = sensorTriggerTimestamps.clockF;
-      currentSensorStates.clockG = sensorTriggerTimestamps.clockG;
+      numReportEntries = gReport.ExportTriggers(actions, timestamps);
       portEXIT_CRITICAL(&resourceLock);
+
       
+/*      
       if(prevSensorStates.clockA != currentSensorStates.clockA ||
          prevSensorStates.clockB != currentSensorStates.clockB ||
          prevSensorStates.clockC != currentSensorStates.clockC ||
@@ -91,14 +91,53 @@ void systemAdminProcess(void * parameter) {
          prevSensorStates.clockE != currentSensorStates.clockE ||
          prevSensorStates.clockF != currentSensorStates.clockF ||
          prevSensorStates.clockG != currentSensorStates.clockG)
-       {
+*/        
+      if(numReportEntries > 0)
+      {
           WiFiClientSecure client;
           const int httpPort = 443;
-          if (!client.connect(host, httpPort)) {
+          if (!client.connect(host, httpPort)) 
+          {
             Serial.println("connection failed");
             return;
           }
+
           float temperature = getTemperature();
+          
+          for(int i=0; i<numReportEntries; ++i)
+          {
+            String params = String("?t=") + temperature + 
+                            "&clk=" + timestamps[i] +
+                            "&d=" + ambientDarkness;
+            switch(actions[i])
+            {
+              case Report::eAction::MSA_TRIGGER: params = params + "&mA=1"; break;
+              case Report::eAction::MSB_TRIGGER: params = params + "&mB=1"; break;
+              case Report::eAction::MSC_TRIGGER: params = params + "&mC=1"; break;
+              case Report::eAction::MSD_TRIGGER: params = params + "&mD=1"; break;
+              case Report::eAction::MSE_TRIGGER: params = params + "&mE=1"; break;
+              case Report::eAction::MSF_TRIGGER: params = params + "&mF=1"; break;
+              case Report::eAction::MSG_TRIGGER: params = params + "&mG=1"; break;
+
+              case Report::eAction::L1_ON: params = params  + "&s1=1"; break;
+              case Report::eAction::L2_ON: params = params  + "&s2=1"; break;
+              case Report::eAction::L3_ON: params = params  + "&s3=1"; break;
+              case Report::eAction::L4_ON: params = params  + "&s4=1"; break;
+              case Report::eAction::L1_OFF: params = params + "&s1=0"; break;
+              case Report::eAction::L2_OFF: params = params + "&s2=0"; break;
+              case Report::eAction::L3_OFF: params = params + "&s3=0"; break;
+              case Report::eAction::L4_OFF: params = params + "&s4=0"; break;
+                
+            }
+
+            String dataEncodedUrl = url + params;
+            //Serial.println(dataEncodedUrl);
+            client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
+               "Host: " + host + "\r\n" + 
+               "Connection: close\r\n\r\n");
+          }
+          
+/*          
           String params = String("?mA=") + currentSensorStates.clockA + 
                           "&mB=" + currentSensorStates.clockB + 
                           "&mC=" + currentSensorStates.clockC + 
@@ -121,6 +160,7 @@ void systemAdminProcess(void * parameter) {
           prevSensorStates.clockE = currentSensorStates.clockE;
           prevSensorStates.clockF = currentSensorStates.clockF;
           prevSensorStates.clockG = currentSensorStates.clockG;
+ */         
        }
    }
    
