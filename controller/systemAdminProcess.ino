@@ -4,8 +4,8 @@ char *WifiSSID = NULL, *WifiPassword = NULL;
 
 void systemAdminProcess(void * parameter) {
 
-  sensorState_t prevSensorStates{0, 0, 0, 0, 0, 0};
-  sensorState_t currentSensorStates;
+//  sensorState_t prevSensorStates{0, 0, 0, 0, 0, 0};
+//  sensorState_t currentSensorStates;
   for(;;) 
   {
     /*

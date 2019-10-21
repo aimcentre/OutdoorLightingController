@@ -99,9 +99,7 @@ void IRAM_ATTR onMotionG()
 }
 
 void lightingControlProcess(void * parameter)
-{
-  sensorState_t sensorTriggers;
-   
+{   
   for(;;)
   {
     if (xSemaphoreTake(timerSemaphore, 0) == pdTRUE)
