@@ -6,7 +6,7 @@
 class Report
 {
   public:
-  enum eAction{ MSA_TRIGGER = 1, MSB_TRIGGER, MSC_TRIGGER, MSD_TRIGGER, MSE_TRIGGER, MSF_TRIGGER, MSG_TRIGGER,
+  enum eAction{ NONE = 0, MSA_TRIGGER = 1, MSB_TRIGGER, MSC_TRIGGER, MSD_TRIGGER, MSE_TRIGGER, MSF_TRIGGER, MSG_TRIGGER,
               L1_ON, L1_OFF, L2_ON, L2_OFF, L3_ON, L3_OFF, L4_ON, L4_OFF, L5_ON, L5_OFF };
 
   private:
@@ -27,7 +27,8 @@ class Report
     int idx = mIndex < REPORT_BUFFER_SIZE - 1 ? mIndex++ : REPORT_BUFFER_SIZE - 1;
 
     mAction[idx] = action;
-    mTimestamps[idx] = millis();    
+    mTimestamps[idx] = millis();
+    Serial.printf("Idx =  %d\r\n", idx);    
   }
 
   int ExportTriggers(eAction* actionBuffer, unsigned long* timestampBuffer) volatile

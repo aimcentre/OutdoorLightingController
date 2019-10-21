@@ -118,20 +118,76 @@ void lightingControlProcess(void * parameter)
       portEXIT_CRITICAL(&resourceLock);
 
       //Turning on and off lamps as necessary
+      Report::eAction actions[5];
       if(gSegmentA.Execute())
-        gReport.AddAction(gSegmentA.GetStatus() == ON ? Report::eAction::L1_ON : Report::eAction::L1_OFF);
-      
+        actions[0] = gSegmentA.GetStatus() == ON ? Report::eAction::L1_ON : Report::eAction::L1_OFF;
+      else
+        actions[0] = Report::eAction::NONE;
+
       if(gSegmentB.Execute())
-        gReport.AddAction(gSegmentB.GetStatus() == ON ? Report::eAction::L2_ON : Report::eAction::L2_OFF);
+        actions[1] = gSegmentB.GetStatus() == ON ? Report::eAction::L2_ON : Report::eAction::L2_OFF;
+      else
+        actions[1] = Report::eAction::NONE;
 
       if(gSegmentC.Execute())
-        gReport.AddAction(gSegmentC.GetStatus() == ON ? Report::eAction::L3_ON : Report::eAction::L3_OFF);
+        actions[2] = gSegmentC.GetStatus() == ON ? Report::eAction::L3_ON : Report::eAction::L3_OFF;
+      else
+        actions[2] = Report::eAction::NONE;
 
       if(gSegmentD.Execute())
+        actions[3] = gSegmentD.GetStatus() == ON ? Report::eAction::L4_ON : Report::eAction::L4_OFF;
+      else
+        actions[3] = Report::eAction::NONE;
+
+      if(gSegmentE.Execute())
+        actions[4] = gSegmentE.GetStatus() == ON ? Report::eAction::L5_ON : Report::eAction::L5_OFF;
+      else
+        actions[4] = Report::eAction::NONE;
+
+      portENTER_CRITICAL(&resourceLock);
+        for(int i=0; i<5; ++i)
+        {
+          if(actions[i] != Report::eAction::NONE)
+            gReport.AddAction(actions[i]);
+        }
+      portEXIT_CRITICAL(&resourceLock);
+/*  
+      
+      {
+        portENTER_CRITICAL(&resourceLock);
+        gReport.AddAction(gSegmentA.GetStatus() == ON ? Report::eAction::L1_ON : Report::eAction::L1_OFF);
+        portEXIT_CRITICAL(&resourceLock);
+      }
+        
+      
+      if(gSegmentB.Execute())
+      {
+        portENTER_CRITICAL(&resourceLock);
+        gReport.AddAction(gSegmentB.GetStatus() == ON ? Report::eAction::L2_ON : Report::eAction::L2_OFF);
+        portEXIT_CRITICAL(&resourceLock);
+      }
+
+      if(gSegmentC.Execute())
+      {
+        portENTER_CRITICAL(&resourceLock);
+        gReport.AddAction(gSegmentC.GetStatus() == ON ? Report::eAction::L3_ON : Report::eAction::L3_OFF);
+        portEXIT_CRITICAL(&resourceLock);
+      }
+
+      if(gSegmentD.Execute())
+      {
+        portENTER_CRITICAL(&resourceLock);
         gReport.AddAction(gSegmentD.GetStatus() == ON ? Report::eAction::L4_ON : Report::eAction::L4_OFF);
+        portEXIT_CRITICAL(&resourceLock);
+      }
 
        if(gSegmentE.Execute())
-        gReport.AddAction(gSegmentE.GetStatus() == ON ? Report::eAction::L5_ON : Report::eAction::L5_OFF);      
+       {
+        portENTER_CRITICAL(&resourceLock);
+        gReport.AddAction(gSegmentE.GetStatus() == ON ? Report::eAction::L5_ON : Report::eAction::L5_OFF);
+        portEXIT_CRITICAL(&resourceLock);
+       }
+*/       
     }
     else
       delay(10);
@@ -223,11 +279,11 @@ void initLightingControlSystem()
 */
 
   // Turnning all lamps for 5 second
-  gSegmentA.Trigger(0, 5);
-  gSegmentB.Trigger(0, 5);
-  gSegmentC.Trigger(0, 5);
-  gSegmentD.Trigger(0, 5);
-  gSegmentE.Trigger(0, 5);
+  gSegmentA.Trigger(2, 5);
+  gSegmentB.Trigger(2, 5);
+  gSegmentC.Trigger(2, 5);
+  gSegmentD.Trigger(2, 5);
+  gSegmentE.Trigger(2, 5);
   
   
 }
@@ -236,7 +292,7 @@ void fetchSchedule()
 {
   const char* timeAPI = "http://worldtimeapi.org/api/timezone/America/Edmonton";
   
-  Serial.println("Fetching schedule ...");
+  //Serial.println("Fetching schedule ...");
   
   if(WiFi.status() == WL_CONNECTED)
   {

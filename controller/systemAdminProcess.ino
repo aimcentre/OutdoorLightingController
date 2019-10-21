@@ -82,28 +82,19 @@ void systemAdminProcess(void * parameter) {
       numReportEntries = gReport.ExportTriggers(actions, timestamps);
       portEXIT_CRITICAL(&resourceLock);
 
-      
-/*      
-      if(prevSensorStates.clockA != currentSensorStates.clockA ||
-         prevSensorStates.clockB != currentSensorStates.clockB ||
-         prevSensorStates.clockC != currentSensorStates.clockC ||
-         prevSensorStates.clockD != currentSensorStates.clockD ||
-         prevSensorStates.clockE != currentSensorStates.clockE ||
-         prevSensorStates.clockF != currentSensorStates.clockF ||
-         prevSensorStates.clockG != currentSensorStates.clockG)
-*/        
       if(numReportEntries > 0)
       {
           WiFiClientSecure client;
           const int httpPort = 443;
           if (!client.connect(host, httpPort)) 
           {
-            Serial.println("connection failed");
+            Serial.println("Connection failed");
             return;
           }
 
           float temperature = getTemperature();
-          
+
+          //Serial.printf("Processing %d report entries \r\n", numReportEntries);
           for(int i=0; i<numReportEntries; ++i)
           {
             String params = String("?t=") + temperature + 
@@ -119,11 +110,11 @@ void systemAdminProcess(void * parameter) {
               case Report::eAction::MSF_TRIGGER: params = params + "&mF=1"; break;
               case Report::eAction::MSG_TRIGGER: params = params + "&mG=1"; break;
 
-              case Report::eAction::L1_ON: params = params  + "&s1=1"; break;
-              case Report::eAction::L2_ON: params = params  + "&s2=1"; break;
-              case Report::eAction::L3_ON: params = params  + "&s3=1"; break;
-              case Report::eAction::L4_ON: params = params  + "&s4=1"; break;
-              case Report::eAction::L5_ON: params = params  + "&s5=1"; break;
+              case Report::eAction::L1_ON:  params = params + "&s1=1"; break;
+              case Report::eAction::L2_ON:  params = params + "&s2=1"; break;
+              case Report::eAction::L3_ON:  params = params + "&s3=1"; break;
+              case Report::eAction::L4_ON:  params = params + "&s4=1"; break;
+              case Report::eAction::L5_ON:  params = params + "&s5=1"; break;
               case Report::eAction::L1_OFF: params = params + "&s1=0"; break;
               case Report::eAction::L2_OFF: params = params + "&s2=0"; break;
               case Report::eAction::L3_OFF: params = params + "&s3=0"; break;
@@ -134,35 +125,12 @@ void systemAdminProcess(void * parameter) {
 
             String dataEncodedUrl = url + params;
             //Serial.println(dataEncodedUrl);
+            Serial.println(params);
             client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" + 
                "Connection: close\r\n\r\n");
           }
           
-/*          
-          String params = String("?mA=") + currentSensorStates.clockA + 
-                          "&mB=" + currentSensorStates.clockB + 
-                          "&mC=" + currentSensorStates.clockC + 
-                          "&mD=" + currentSensorStates.clockD + 
-                          "&mE=" + currentSensorStates.clockE + 
-                          "&mF=" + currentSensorStates.clockF + 
-                          "&mG=" + currentSensorStates.clockG + 
-                          "&d=" + ambientDarkness + 
-                          "&t=" + temperature;
-          String dataEncodedUrl = url + params;
-          //Serial.println(dataEncodedUrl);
-          client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
-               "Host: " + host + "\r\n" + 
-               "Connection: close\r\n\r\n");
-
-          prevSensorStates.clockA = currentSensorStates.clockA;
-          prevSensorStates.clockB = currentSensorStates.clockB;
-          prevSensorStates.clockC = currentSensorStates.clockC;
-          prevSensorStates.clockD = currentSensorStates.clockD;
-          prevSensorStates.clockE = currentSensorStates.clockE;
-          prevSensorStates.clockF = currentSensorStates.clockF;
-          prevSensorStates.clockG = currentSensorStates.clockG;
- */         
        }
    }
    
