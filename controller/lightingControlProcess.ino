@@ -151,44 +151,7 @@ void lightingControlProcess(void * parameter)
           gReport.AddAction(actions[i]);
       }
       portEXIT_CRITICAL(&resourceLock);
-      
-/*  
-      
-      {
-        portENTER_CRITICAL(&resourceLock);
-        gReport.AddAction(gSegmentA.GetStatus() == ON ? Report::eAction::L1_ON : Report::eAction::L1_OFF);
-        portEXIT_CRITICAL(&resourceLock);
-      }
-        
-      
-      if(gSegmentB.Execute())
-      {
-        portENTER_CRITICAL(&resourceLock);
-        gReport.AddAction(gSegmentB.GetStatus() == ON ? Report::eAction::L2_ON : Report::eAction::L2_OFF);
-        portEXIT_CRITICAL(&resourceLock);
-      }
-
-      if(gSegmentC.Execute())
-      {
-        portENTER_CRITICAL(&resourceLock);
-        gReport.AddAction(gSegmentC.GetStatus() == ON ? Report::eAction::L3_ON : Report::eAction::L3_OFF);
-        portEXIT_CRITICAL(&resourceLock);
-      }
-
-      if(gSegmentD.Execute())
-      {
-        portENTER_CRITICAL(&resourceLock);
-        gReport.AddAction(gSegmentD.GetStatus() == ON ? Report::eAction::L4_ON : Report::eAction::L4_OFF);
-        portEXIT_CRITICAL(&resourceLock);
-      }
-
-       if(gSegmentE.Execute())
-       {
-        portENTER_CRITICAL(&resourceLock);
-        gReport.AddAction(gSegmentE.GetStatus() == ON ? Report::eAction::L5_ON : Report::eAction::L5_OFF);
-        portEXIT_CRITICAL(&resourceLock);
-       }
-*/       
+             
     }
     else
       delay(10);
@@ -258,13 +221,6 @@ void initLightingControlSystem()
   // Start an alarm
   timerAlarmEnable(timer);
 
-  // Initializing the lamp-schedule timer
-  lampScheduleTimer = timerBegin(1, 80, true);
-  timerAttachInterrupt(lampScheduleTimer, &fetchSchedule, true);
-  timerAlarmWrite(lampScheduleTimer, 2000000, true);
-  timerAlarmEnable(lampScheduleTimer);
-
-
   // Setting up motion-sensor interrupts
   attachInterrupt(MOTION_A, &onMotionA, FALLING);
   attachInterrupt(MOTION_B, &onMotionB, FALLING);
@@ -287,15 +243,4 @@ void initLightingControlSystem()
   gSegmentE.Trigger(2, 5);
   
   
-}
-
-void fetchSchedule()
-{
-  const char* timeAPI = "http://worldtimeapi.org/api/timezone/America/Edmonton";
-  
-  //Serial.println("Fetching schedule ...");
-  
-  if(WiFi.status() == WL_CONNECTED)
-  {
-  }
 }

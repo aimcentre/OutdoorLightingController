@@ -1,3 +1,5 @@
+#include "appConfig.h"
+
 // Loads configuration settings from the EEPROM and assigns them to the given "settings" data structure.
 // Resets configuration settings to default settings if the CONFIG_VERSION stated in the source code does not 
 // match with the CONFIG_VERSION stored in the EEPROM. 

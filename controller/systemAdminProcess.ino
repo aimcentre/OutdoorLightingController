@@ -1,30 +1,19 @@
 #include <WiFiClientSecure.h>
+#include <HTTPClient.h>
 
 char *WifiSSID = NULL, *WifiPassword = NULL;
 
 void systemAdminProcess(void * parameter) {
 
-//  sensorState_t prevSensorStates{0, 0, 0, 0, 0, 0};
-//  sensorState_t currentSensorStates;
+  // Initializing the lamp-schedule timer
+  lampScheduleTimer = timerBegin(1, 80, true);
+  timerAttachInterrupt(lampScheduleTimer, &fetchSchedule, true);
+  timerAlarmWrite(lampScheduleTimer, SCHEDULE_CHECK_INTERVAL_SEC * 1000000, true);
+  timerAlarmEnable(lampScheduleTimer);
+
+
   for(;;) 
   {
-    /*
-    if(WiFi.status() != WL_CONNECTED || wifiInitialized == false)
-    {
-      int t = millis();
-      while (WiFi.status() != WL_CONNECTED && (millis() - t) < 10000) {
-        delay(1000);
-        Serial.println("Connecting to WiFi..");
-      }
-
-      if(WiFi.status() == WL_CONNECTED)
-      {
-        Serial.println(WiFi.localIP());
-        wifiInitialized = true;
-      }
-    }
-    */
-
     // Checking if Access Point password-reset button is kept pressed (in which case it retrnse false) false for10 second
     unsigned long t = millis();
     while(digitalRead(WIFI_RESET) == false && millis() - t < 10000)
@@ -135,5 +124,44 @@ void systemAdminProcess(void * parameter) {
    
     delay(500);
 
+  }
+}
+
+
+
+void fetchSchedule()
+{    
+  if(WiFi.status() == WL_CONNECTED)
+  {
+    Serial.println("Getting current time ... ");
+    Serial.println(TIME_SERVER_API);
+  
+     Serial.println("Fetching schedule ...");
+  
+    String startTime = "";
+  
+    String calendar_url = String(CALENDAR_API_ROOT) + CALENDAR_ID + 
+        "/events?orderBy=startTime&singleEvents=true" + 
+        "&timeMin=" + startTime + 
+        "&key=" + CALENDAR_API_KEY;
+
+     //Serial.println(calendar_url);
+/*
+    HTTPClient http;
+    http.begin(TIME_SERVER_API);
+    int httpCode = http.GET();  
+    if (httpCode > 0) 
+    {
+        String payload = http.getString();
+        Serial.println(httpCode);
+        Serial.println(payload);
+      }
+    else 
+    {
+      Serial.println("Error on HTTP request");
+    }
+*/
+        //https://www.googleapis.com/calendar/v3/calendars/abva.org_8hkdqiv3l60hb844mek17rr7rk@group.calendar.google.com/events?key=AIzaSyCTisDVkthQZRXOcQH1mu17gOscxM0R-Y4&timeMin=2019-10-22T06:00:00-06:00
+    
   }
 }

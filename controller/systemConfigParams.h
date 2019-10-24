@@ -38,9 +38,6 @@ configSettings_t settings;
 
 #endif
 
-// Default Access Point name and the password
-#define AP_NAME "LightingControllerAP"
-#define DEFAULT_AP_PW "pass1234"
 
 // Enable configuring the portal over WIFI LAN. 
 // WARNING: NOT SECURE. Set this to false in production environment
@@ -60,3 +57,5 @@ configSettings_t settings;
 #define TEST_AUX_LAMP_ON_TIME 6
 #define TEST_INTER_SEG_DELAY 4
 #define TEST_DAYLIGHT_THRESHOLD 4095
+
+#define SCHEDULE_CHECK_INTERVAL_SEC 5
