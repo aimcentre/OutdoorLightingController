@@ -1,13 +1,16 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 
 char *WifiSSID = NULL, *WifiPassword = NULL;
+
+volatile bool FetchScheduleFlag = false;
 
 void systemAdminProcess(void * parameter) {
 
   // Initializing the lamp-schedule timer
   lampScheduleTimer = timerBegin(1, 80, true);
-  timerAttachInterrupt(lampScheduleTimer, &fetchSchedule, true);
+  timerAttachInterrupt(lampScheduleTimer, &fetchScheduleISR, true);
   timerAlarmWrite(lampScheduleTimer, SCHEDULE_CHECK_INTERVAL_SEC * 1000000, true);
   timerAlarmEnable(lampScheduleTimer);
 
@@ -75,7 +78,7 @@ void systemAdminProcess(void * parameter) {
       {
           WiFiClientSecure client;
           const int httpPort = 443;
-          if (!client.connect(host, httpPort)) 
+          if (!client.connect(spreadsheetHost, httpPort)) 
           {
             Serial.println("Connection failed");
             return;
@@ -117,9 +120,78 @@ void systemAdminProcess(void * parameter) {
           //Serial.println(dataEncodedUrl);
           Serial.println(params);
           client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
+             "Host: " + spreadsheetHost + "\r\n" + 
+             "Connection: close\r\n\r\n");
+
+          client.stop();
+       }
+
+
+        if(FetchScheduleFlag)
+        {
+          String currentTime = fetchTime();
+          Serial.println(currentTime);
+
+          /*
+        
+          WiFiClientSecure client;
+          const int httpPort = 443;
+          const char* host = "www.googleapis.com";
+          if (!client.connect(host, httpPort)) 
+          {
+            Serial.println("Connection failed");
+            return;
+          }
+      
+          Serial.println("Fetching current time ...");
+        
+          String startTime = "2019-10-23T08:00:00-06:00";
+        
+          String calendar_url = String(CALENDAR_API_ROOT) + CALENDAR_ID + 
+              "/events?orderBy=startTime&singleEvents=true" + 
+              "&timeMin=" + startTime + 
+              "&key=" + CALENDAR_API_KEY;
+      
+           Serial.println(calendar_url);
+
+           client.print(String("GET ") + calendar_url +" HTTP/1.1\r\n" +
              "Host: " + host + "\r\n" + 
              "Connection: close\r\n\r\n");
-       }
+
+            while (client.connected()) {
+              String line = client.readStringUntil('\n');
+              if (line == "\r") {
+                Serial.println("headers received");
+                break;
+              }
+            }
+
+            while (client.available()) {
+              String str = client.readString();
+              Serial.println(str);
+            }
+*/
+
+           FetchScheduleFlag = false;
+      /*
+          HTTPClient http;
+          http.begin(TIME_SERVER_API);
+          int httpCode = http.GET();  
+          if (httpCode > 0) 
+          {
+              String payload = http.getString();
+              Serial.println(httpCode);
+              Serial.println(payload);
+            }
+          else 
+          {
+            Serial.println("Error on HTTP request");
+          }
+      */
+              //https://www.googleapis.com/calendar/v3/calendars/abva.org_8hkdqiv3l60hb844mek17rr7rk@group.calendar.google.com/events?key=AIzaSyCTisDVkthQZRXOcQH1mu17gOscxM0R-Y4&timeMin=2019-10-22T06:00:00-06:00
+          
+        }
+       
    }
    
     delay(500);
@@ -127,41 +199,44 @@ void systemAdminProcess(void * parameter) {
   }
 }
 
-
-
-void fetchSchedule()
-{    
-  if(WiFi.status() == WL_CONNECTED)
-  {
-    Serial.println("Getting current time ... ");
-    Serial.println(TIME_SERVER_API);
-  
-     Serial.println("Fetching schedule ...");
-  
-    String startTime = "";
-  
-    String calendar_url = String(CALENDAR_API_ROOT) + CALENDAR_ID + 
-        "/events?orderBy=startTime&singleEvents=true" + 
-        "&timeMin=" + startTime + 
-        "&key=" + CALENDAR_API_KEY;
-
-     //Serial.println(calendar_url);
-/*
-    HTTPClient http;
-    http.begin(TIME_SERVER_API);
-    int httpCode = http.GET();  
-    if (httpCode > 0) 
+String fetchTime()
+{
+   WiFiClientSecure client;
+    const int httpPort = 443;
+    if (!client.connect(TIME_SERVER_HOST, httpPort)) 
     {
-        String payload = http.getString();
-        Serial.println(httpCode);
-        Serial.println(payload);
-      }
-    else 
-    {
-      Serial.println("Error on HTTP request");
+      Serial.println("Connection failed");
+      return "";
     }
-*/
-        //https://www.googleapis.com/calendar/v3/calendars/abva.org_8hkdqiv3l60hb844mek17rr7rk@group.calendar.google.com/events?key=AIzaSyCTisDVkthQZRXOcQH1mu17gOscxM0R-Y4&timeMin=2019-10-22T06:00:00-06:00
-    
-  }
+
+    Serial.println("Fetching current time ...");
+  
+    client.print(String("GET ") + TIME_SERVER_API +" HTTP/1.1\r\n" +
+       "Host: " + TIME_SERVER_HOST + "\r\n" + 
+       "Connection: close\r\n\r\n");
+
+    while (client.connected()) {
+      String line = client.readStringUntil('\n');
+      if (line == "\r") {
+        Serial.println("headers received");
+        break;
+      }
+    }
+
+    String result = "";
+    while (client.available()) {
+      result = result + client.readString();
+    }
+
+    client.stop();
+
+    return result;
+}
+
+
+
+void fetchScheduleISR()
+{
+  FetchScheduleFlag = true;
+
 }
