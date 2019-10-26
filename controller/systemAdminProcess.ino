@@ -1,6 +1,8 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include "AppConfig.h"
+#include "HTTPSRedirect.h"
 
 char *WifiSSID = NULL, *WifiPassword = NULL;
 
@@ -11,12 +13,14 @@ void systemAdminProcess(void * parameter) {
   // Initializing the lamp-schedule timer
   lampScheduleTimer = timerBegin(1, 80, true);
   timerAttachInterrupt(lampScheduleTimer, &fetchScheduleISR, true);
-  timerAlarmWrite(lampScheduleTimer, SCHEDULE_CHECK_INTERVAL_SEC * 1000000, true);
+  timerAlarmWrite(lampScheduleTimer, SCHEDULE_CHECK_INTERVAL_SEC * 2000000, true);
   timerAlarmEnable(lampScheduleTimer);
 
 
   for(;;) 
   {
+    //TODO: uncomment the following block comment to enable AP password resetting functionality
+    /*
     // Checking if Access Point password-reset button is kept pressed (in which case it retrnse false) false for10 second
     unsigned long t = millis();
     while(digitalRead(WIFI_RESET) == false && millis() - t < 10000)
@@ -44,6 +48,8 @@ void systemAdminProcess(void * parameter) {
       accessPointPasswordResetComplete = true;  
       accessPointPasswordResetBtnPressedTime = 0;
     }
+
+    */
 
 
     if(WiFi.status() != WL_CONNECTED)
@@ -129,73 +135,140 @@ void systemAdminProcess(void * parameter) {
 
         if(FetchScheduleFlag)
         {
-          String currentTime = fetchTime();
-          Serial.println(currentTime);
+          Serial.println("Fetching schedule ...");
+          String schedule = fetchSchedule(SCHEDULE_RETREIAVER_HOST, 443, SCHEDULE_RETRIEVER_URL);
+          Serial.println(schedule);
 
-          /*
-        
-          WiFiClientSecure client;
-          const int httpPort = 443;
-          const char* host = "www.googleapis.com";
-          if (!client.connect(host, httpPort)) 
+          if(schedule.length() > 0)
           {
-            Serial.println("Connection failed");
-            return;
-          }
-      
-          Serial.println("Fetching current time ...");
-        
-          String startTime = "2019-10-23T08:00:00-06:00";
-        
-          String calendar_url = String(CALENDAR_API_ROOT) + CALENDAR_ID + 
-              "/events?orderBy=startTime&singleEvents=true" + 
-              "&timeMin=" + startTime + 
-              "&key=" + CALENDAR_API_KEY;
-      
-           Serial.println(calendar_url);
+            StaticJsonDocument<1024> doc;
+            DeserializationError error = deserializeJson(doc, schedule);
 
-           client.print(String("GET ") + calendar_url +" HTTP/1.1\r\n" +
-             "Host: " + host + "\r\n" + 
-             "Connection: close\r\n\r\n");
+            if (error) 
+            {
+              Serial.print(F("deserializeJson() failed: "));
+              Serial.println(error.c_str());
+            }
+            else
+            {
+              JsonArray arr = doc.as<JsonArray>();
+              for(JsonVariant v : arr)
+              {
+                JsonObject obj = v.as<JsonObject>();
+                
+                String segments = obj["s"];
+                unsigned int offset = obj["offset"];
+                unsigned int period = obj["period"];
+                
+                segments.toUpperCase();
+                if(segments.indexOf("S1") >= 0){
+                  gSegmentA.ScheduleCycle(offset, period);
+                }
+                
+                if(segments.indexOf("S2") >= 0){
+                  gSegmentB.ScheduleCycle(offset, period);
+                }
 
-            while (client.connected()) {
-              String line = client.readStringUntil('\n');
-              if (line == "\r") {
-                Serial.println("headers received");
-                break;
+                if(segments.indexOf("S3") >= 0){
+                  gSegmentC.ScheduleCycle(offset, period);
+                }
+
+                if(segments.indexOf("S4") >= 0){
+                  gSegmentD.ScheduleCycle(offset, period);
+                }
+
+                if(segments.indexOf("S5") >= 0){
+                  gSegmentE.ScheduleCycle(offset, period);
+                }              
               }
             }
-
-            while (client.available()) {
-              String str = client.readString();
-              Serial.println(str);
-            }
-*/
-
-           FetchScheduleFlag = false;
-      /*
-          HTTPClient http;
-          http.begin(TIME_SERVER_API);
-          int httpCode = http.GET();  
-          if (httpCode > 0) 
-          {
-              String payload = http.getString();
-              Serial.println(httpCode);
-              Serial.println(payload);
-            }
-          else 
-          {
-            Serial.println("Error on HTTP request");
           }
-      */
-              //https://www.googleapis.com/calendar/v3/calendars/abva.org_8hkdqiv3l60hb844mek17rr7rk@group.calendar.google.com/events?key=AIzaSyCTisDVkthQZRXOcQH1mu17gOscxM0R-Y4&timeMin=2019-10-22T06:00:00-06:00
-          
+
+          FetchScheduleFlag = false;        
         }
        
    }
    
     delay(500);
 
+  }
+}
+
+String fetchSchedule(const char* host, int port, const char* url)
+{
+  WiFiClientSecure client;
+  if (!client.connect(host, port)) 
+  {
+    Serial.println("Connection failed");
+    return "";
+  }
+  
+  client.print(String("GET ") + url +" HTTP/1.1\r\n" +
+     "Host: " + host + "\r\n" + 
+     "Connection: close\r\n\r\n");
+       
+  bool redirect = false;
+  String redirectUrl = "";
+  
+  while (client.connected()) {
+
+    String line = client.readStringUntil('\n');
+   
+    if(line.indexOf("HTTP/1.1 ") == 0)
+    {
+      int pos = line.indexOf(" ", 9);
+      int statusCode = line.substring(9, pos).toInt();
+
+      if(statusCode == 301 || statusCode == 302)
+      {
+        redirect = true;
+      }
+    }
+
+    if(line.indexOf("Location: ") == 0)
+    {
+      redirectUrl = line.substring(10);
+    }
+
+    if (line == "\r") {
+        //Serial.println("headers received");
+        break;
+      }
+
+  }
+
+  if(redirect && redirectUrl.length() > 0)
+  {
+    int idx1 = redirectUrl.indexOf("://") + 3;
+    int idx2 = redirectUrl.indexOf("/", idx1);
+    String host2 = redirectUrl.substring(idx1, idx2);
+    String url2 = redirectUrl.substring(idx2);
+    
+    //Serial.print("Redirecting to host: ");
+    //Serial.println(host);
+    //Serial.print("Url: ");
+    //Serial.println(url);    
+    //Serial.println(redirectUrl);
+
+    client.stop();
+   
+    return fetchSchedule(host2.c_str(), 443, url2.c_str());
+  }
+  else
+  {
+    String result = "";
+    while (client.available())
+    {
+      String line = client.readStringUntil('\n');
+      line.trim();
+      if(result.length() == 0)
+        result = line;
+      else
+        result = result + "," + line;
+    }
+
+    client.stop();
+    return result;
   }
 }
 
@@ -209,7 +282,7 @@ String fetchTime()
       return "";
     }
 
-    Serial.println("Fetching current time ...");
+    //Serial.println("Fetching current time ...");
   
     client.print(String("GET ") + TIME_SERVER_API +" HTTP/1.1\r\n" +
        "Host: " + TIME_SERVER_HOST + "\r\n" + 
@@ -218,7 +291,7 @@ String fetchTime()
     while (client.connected()) {
       String line = client.readStringUntil('\n');
       if (line == "\r") {
-        Serial.println("headers received");
+        //Serial.println("headers received");
         break;
       }
     }
@@ -227,12 +300,10 @@ String fetchTime()
     while (client.available()) {
       result = result + client.readString();
     }
-
     client.stop();
 
     return result;
 }
-
 
 
 void fetchScheduleISR()
