@@ -2,7 +2,6 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "AppConfig.h"
-#include "HTTPSRedirect.h"
 
 char *WifiSSID = NULL, *WifiPassword = NULL;
 
