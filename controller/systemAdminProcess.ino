@@ -12,10 +12,11 @@ void systemAdminProcess(void * parameter) {
   // Initializing the lamp-schedule timer
   lampScheduleTimer = timerBegin(1, 80, true);
   timerAttachInterrupt(lampScheduleTimer, &fetchScheduleISR, true);
-  timerAlarmWrite(lampScheduleTimer, SCHEDULE_CHECK_INTERVAL_SEC * 2000000, true);
+  timerAlarmWrite(lampScheduleTimer, SCHEDULE_CHECK_INTERVAL_SEC * 1000000, true);
   timerAlarmEnable(lampScheduleTimer);
 
-
+  FetchScheduleFlag = true;
+  
   for(;;) 
   {
 
@@ -131,74 +132,7 @@ void systemAdminProcess(void * parameter) {
 
         if(FetchScheduleFlag)
         {
-          Serial.println("Fetching schedule ...");
-          String schedule = fetchSchedule(SCHEDULE_RETREIAVER_HOST, 443, SCHEDULE_RETRIEVER_URL);
-          Serial.println(schedule);
-
-          if(schedule.length() > 0)
-          {
-            StaticJsonDocument<1024> doc;
-            DeserializationError error = deserializeJson(doc, schedule);
-
-            if (error) 
-            {
-              Serial.print(F("deserializeJson() failed: "));
-              Serial.println(error.c_str());
-            }
-            else
-            {
-              JsonArray arr = doc.as<JsonArray>();
-              
-              portENTER_CRITICAL(&resourceLock);
-              gSegmentA.ResetSchedule();
-              gSegmentB.ResetSchedule();
-              gSegmentC.ResetSchedule();
-              gSegmentD.ResetSchedule();
-              gSegmentE.ResetSchedule();
-
-              String message = "";
-              if(arr.size() > 0)
-              {
-                
-                for(JsonVariant v : arr)
-                {
-                  JsonObject obj = v.as<JsonObject>();
-                  
-                  String segments = obj["s"];
-                  unsigned int offset = obj["offset"];
-                  unsigned int period = obj["period"];
-                  
-                  segments.toUpperCase();
-                  if(segments.indexOf("S1") >= 0){
-                    message = message + "\r\nSegment A: " + gSegmentA.ScheduleCycle(offset, period);
-                  }
-                  
-                  if(segments.indexOf("S2") >= 0){
-                    message = message + "\r\nSegment B: " + gSegmentB.ScheduleCycle(offset, period);
-                  }
-  
-                  if(segments.indexOf("S3") >= 0){
-                    message = message + "\r\nSegment C: " + gSegmentC.ScheduleCycle(offset, period);
-                  }
-  
-                  if(segments.indexOf("S4") >= 0){
-                    message = message + "\r\nSegment D: " + gSegmentD.ScheduleCycle(offset, period);
-                  }
-  
-                  if(segments.indexOf("S5") >= 0){
-                    message = message + "\r\nSegment E: " + gSegmentE.ScheduleCycle(offset, period);
-                  }          
-                }
-              }
-              portEXIT_CRITICAL(&resourceLock);
-
-              if(message.length() > 0)
-              {
-                Serial.println(message);
-              }
-            }
-          }
-
+          ReloadSchedule();
           FetchScheduleFlag = false;        
         }
        
@@ -206,6 +140,77 @@ void systemAdminProcess(void * parameter) {
    
     delay(500);
 
+  }
+}
+
+void ReloadSchedule()
+{
+  Serial.println("Fetching schedule ...");
+  String schedule = fetchSchedule(SCHEDULE_RETREIAVER_HOST, 443, SCHEDULE_RETRIEVER_URL);
+  Serial.println(schedule);
+  
+  if(schedule.length() > 0)
+  {
+    StaticJsonDocument<1024> doc;
+    DeserializationError error = deserializeJson(doc, schedule);
+  
+    if (error) 
+    {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.c_str());
+    }
+    else
+    {
+      JsonArray arr = doc.as<JsonArray>();
+      
+      portENTER_CRITICAL(&resourceLock);
+      gSegmentA.ResetSchedule();
+      gSegmentB.ResetSchedule();
+      gSegmentC.ResetSchedule();
+      gSegmentD.ResetSchedule();
+      gSegmentE.ResetSchedule();
+  
+      String message = "";
+      if(arr.size() > 0)
+      {
+        
+        for(JsonVariant v : arr)
+        {
+          JsonObject obj = v.as<JsonObject>();
+          
+          String segments = obj["s"];
+          unsigned int offset = obj["offset"];
+          unsigned int period = obj["period"];
+          
+          segments.toUpperCase();
+          if(segments.indexOf("S1") >= 0){
+            message = message + "\r\nSegment A: " + gSegmentA.ScheduleCycle(offset, period);
+          }
+          
+          if(segments.indexOf("S2") >= 0){
+            message = message + "\r\nSegment B: " + gSegmentB.ScheduleCycle(offset, period);
+          }
+  
+          if(segments.indexOf("S3") >= 0){
+            message = message + "\r\nSegment C: " + gSegmentC.ScheduleCycle(offset, period);
+          }
+  
+          if(segments.indexOf("S4") >= 0){
+            message = message + "\r\nSegment D: " + gSegmentD.ScheduleCycle(offset, period);
+          }
+  
+          if(segments.indexOf("S5") >= 0){
+            message = message + "\r\nSegment E: " + gSegmentE.ScheduleCycle(offset, period);
+          }          
+        }
+      }
+      portEXIT_CRITICAL(&resourceLock);
+  
+      if(message.length() > 0)
+      {
+        Serial.println(message);
+      }
+    }
   }
 }
 
