@@ -314,11 +314,11 @@ void handleTestModePost(AsyncWebServerRequest * request)
 
      // resetting lamp-state timers
     portENTER_CRITICAL(&resourceLock);
-    gSegmentA.Reset();
-    gSegmentB.Reset();
-    gSegmentC.Reset();
-    gSegmentD.Reset();
-    gSegmentE.Reset();
+    gSegmentA.ResetAll();
+    gSegmentB.ResetAll();
+    gSegmentC.ResetAll();
+    gSegmentD.ResetAll();
+    gSegmentE.ResetAll();
     portEXIT_CRITICAL(&resourceLock);   
 
     handleTestModeGet(request);

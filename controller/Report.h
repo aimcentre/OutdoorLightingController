@@ -28,7 +28,7 @@ class Report
 
     mAction[idx] = action;
     mTimestamps[idx] = millis();
-    Serial.printf("Idx =  %d\r\n", idx);    
+    //Serial.printf("Idx =  %d\r\n", idx);    
   }
 
   int ExportTriggers(eAction* actionBuffer, unsigned long* timestampBuffer) volatile

@@ -19,8 +19,7 @@ void systemAdminProcess(void * parameter) {
 
   for(;;) 
   {
-    //TODO: uncomment the following block comment to enable AP password resetting functionality
-    /*
+
     // Checking if Access Point password-reset button is kept pressed (in which case it retrnse false) false for10 second
     unsigned long t = millis();
     while(digitalRead(WIFI_RESET) == false && millis() - t < 10000)
@@ -48,8 +47,6 @@ void systemAdminProcess(void * parameter) {
       accessPointPasswordResetComplete = true;  
       accessPointPasswordResetBtnPressedTime = 0;
     }
-
-    */
 
 
     if(WiFi.status() != WL_CONNECTED)
@@ -152,34 +149,53 @@ void systemAdminProcess(void * parameter) {
             else
             {
               JsonArray arr = doc.as<JsonArray>();
-              for(JsonVariant v : arr)
+              
+              portENTER_CRITICAL(&resourceLock);
+              gSegmentA.ResetSchedule();
+              gSegmentB.ResetSchedule();
+              gSegmentC.ResetSchedule();
+              gSegmentD.ResetSchedule();
+              gSegmentE.ResetSchedule();
+
+              String message = "";
+              if(arr.size() > 0)
               {
-                JsonObject obj = v.as<JsonObject>();
                 
-                String segments = obj["s"];
-                unsigned int offset = obj["offset"];
-                unsigned int period = obj["period"];
-                
-                segments.toUpperCase();
-                if(segments.indexOf("S1") >= 0){
-                  gSegmentA.ScheduleCycle(offset, period);
+                for(JsonVariant v : arr)
+                {
+                  JsonObject obj = v.as<JsonObject>();
+                  
+                  String segments = obj["s"];
+                  unsigned int offset = obj["offset"];
+                  unsigned int period = obj["period"];
+                  
+                  segments.toUpperCase();
+                  if(segments.indexOf("S1") >= 0){
+                    message = message + "\r\nSegment A: " + gSegmentA.ScheduleCycle(offset, period);
+                  }
+                  
+                  if(segments.indexOf("S2") >= 0){
+                    message = message + "\r\nSegment B: " + gSegmentB.ScheduleCycle(offset, period);
+                  }
+  
+                  if(segments.indexOf("S3") >= 0){
+                    message = message + "\r\nSegment C: " + gSegmentC.ScheduleCycle(offset, period);
+                  }
+  
+                  if(segments.indexOf("S4") >= 0){
+                    message = message + "\r\nSegment D: " + gSegmentD.ScheduleCycle(offset, period);
+                  }
+  
+                  if(segments.indexOf("S5") >= 0){
+                    message = message + "\r\nSegment E: " + gSegmentE.ScheduleCycle(offset, period);
+                  }          
                 }
-                
-                if(segments.indexOf("S2") >= 0){
-                  gSegmentB.ScheduleCycle(offset, period);
-                }
+              }
+              portEXIT_CRITICAL(&resourceLock);
 
-                if(segments.indexOf("S3") >= 0){
-                  gSegmentC.ScheduleCycle(offset, period);
-                }
-
-                if(segments.indexOf("S4") >= 0){
-                  gSegmentD.ScheduleCycle(offset, period);
-                }
-
-                if(segments.indexOf("S5") >= 0){
-                  gSegmentE.ScheduleCycle(offset, period);
-                }              
+              if(message.length() > 0)
+              {
+                Serial.println(message);
               }
             }
           }

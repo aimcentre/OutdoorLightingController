@@ -63,11 +63,13 @@ class LampSegment
   /// ScheduleCycle: Updates the pLampCycleList by either modifying the timing of an existing LampCycle object
   /// in the list or by inserting a new LampCycle object. This method makes sure that the segment is turned on
   /// from the given time period starting from the given time offset 
-  void ScheduleCycle(unsigned int offset, unsigned int period) volatile
+  String ScheduleCycle(unsigned int offset, unsigned int period) volatile
   {
+    int scheduledCycleStartIndex = 1; //We reserve the cycle 0 to on-site triggers, so scheduled cycles are made from index 1 in the lamp-cycle buffer
+    
     //Finding a LampCycle which has an overlapping "on" time with the given period starting from the given offset.
     int targetLampCycleIndex = -1;
-    for(int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
+    for(int i=scheduledCycleStartIndex; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
     {
       if(mLampCycleList[i].mOffset <= offset && (mLampCycleList[i].mOffset + mLampCycleList[i].mPeriod) >= offset)
       {
@@ -79,7 +81,7 @@ class LampSegment
     if(targetLampCycleIndex == -1)
     {
       //No overlapping cycle found, so update the first LampCycle which is already done, or the last one in the buffer if nothing is done.
-      for(int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
+      for(int i=scheduledCycleStartIndex; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
       {
         if(mLampCycleList[i].GetStatus() == LampCycle::eCycleState::DONE)
         {
@@ -87,16 +89,17 @@ class LampSegment
           break;
         }
       }
-
-      if(targetLampCycleIndex == -1)
-      {
-        // There are no LampCycle objects which are in "done" state in the buffer. Select the last object and firce it to be done by resetting it.
-        targetLampCycleIndex = LAMP_CYCLE_BUFFER_SIZE - 1;
-        mLampCycleList[targetLampCycleIndex].Reset();
-      }
     }
 
-    UpdateLampCycle(targetLampCycleIndex, offset, period);    
+    if(targetLampCycleIndex == -1)
+    {
+      return "Lamp-cycle schedule is full. Ignoring the scheduling request";
+    }
+    else
+    {
+      UpdateLampCycle(targetLampCycleIndex, offset, period);  
+      return "Scheduled lamp cycle at index " + String(targetLampCycleIndex); 
+    }     
   }
   
   void OnTick(unsigned int ambientDarkness, unsigned int darknessThreshold) volatile
@@ -134,11 +137,19 @@ class LampSegment
     return mLampStatus;
   }
 
-  void Reset() volatile
+  void ResetAll() volatile
   {
     //Clearing the all LampCycle objects in the buffer
     for(int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
       mLampCycleList[i].Reset();
+  }
+
+  void ResetSchedule() volatile
+  {
+    //Clearing the all LampCycle objects in the buffer
+    for(int i=1; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
+      mLampCycleList[i].Reset();
+    
   }
   
 };
