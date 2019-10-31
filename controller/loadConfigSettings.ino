@@ -39,7 +39,13 @@ void loadConfigSettings(configSettings_t& settings)
     settings.auxiliaryLampOnTime = AUX_LAMP_ON_TIME;
     settings.interSegmentDelay = INTER_SEG_DELAY;
     settings.dayLightThreshold = DAYLIGHT_THRESHOLD;
-    
+
+    strncpy(settings.scheduleApiHost, SCHEDULE_RETREIAVER_HOST, HOST_NAME_MAX_LENGTH-1); 
+    settings.scheduleApiHost[HOST_NAME_MAX_LENGTH-1] = '\0';
+
+    strncpy(settings.scheduleApiPath, SCHEDULE_RETRIEVER_URL, URL_MAX_LENGTH-1); 
+    settings.scheduleApiPath[URL_MAX_LENGTH-1] = '\0';
+
     //Saving the updated configuration structure in the EEPROM.
     EEPROM.put(0, settings);
     EEPROM.commit();

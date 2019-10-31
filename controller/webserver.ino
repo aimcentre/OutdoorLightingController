@@ -24,6 +24,12 @@ void initConfigServer()
   server.on("/testmode", HTTP_GET, [](AsyncWebServerRequest * request){ handleTestModeGet(request);});
   server.on("/testmode", HTTP_POST, [](AsyncWebServerRequest * request){ handleTestModePost(request);});
 
+  server.on("/scheduleapi", HTTP_GET, [](AsyncWebServerRequest * request){ handleScheduleApiGet(request);});
+  server.on("/scheduleapi", HTTP_POST, [](AsyncWebServerRequest * request){ handleScheduleApiPost(request);});
+
+//  server.on("/schedule", HTTP_GET, [](AsyncWebServerRequest * request){ handleScheduleShow(request);});
+//  server.on("/schedule", HTTP_POST, [](AsyncWebServerRequest * request){ handleScheduleReloadReload(request);});
+  
   // Starting the webserver
   server.begin();
   
@@ -73,6 +79,13 @@ void handleRoot(AsyncWebServerRequest * request)
   response->print("</ul>");
   if(enableChanges)    
     response->print("<a href='/lighting'>[Update]</a> ");    
+  response->print("</div><br />");
+
+  response->print("<h2>Schedule API Settings</h2>");
+  response->print("<div>");
+  response->printf("Schedule API URL: https://%s%s<br />", settings.scheduleApiHost, settings.scheduleApiPath);
+  if(enableChanges)    
+    response->print("<a href='/scheduleapi'>[Update]</a> ");    
   response->print("</div><br />");
 
   if(testMode)
@@ -324,7 +337,102 @@ void handleTestModePost(AsyncWebServerRequest * request)
     handleTestModeGet(request);
   }
 } 
+
+
+void handleScheduleApiGet(AsyncWebServerRequest * request)
+{
+  if(!authorizeAccess(request))
+    return;
+      
+  request->send(200, "text/html", 
+    htmlPageHead() +
+    "<h2>Update Schedule API URL</h2>"
+    "<b>Schedule API must use standard HTTPS protocol on port 443.</b>"
+    "<form method='POST' action='/scheduleapi'>"
+      "<label>API URL Host:</label> <input type='text' name='scheduleApiHost', value='" + String(settings.scheduleApiHost) + "'><br />"
+      "<label>API URL URL Path:</label> <input type='text' name='scheduleApiPath', value='" + String(settings.scheduleApiPath) + "'><br />"
+      "<input type='submit' value='Update'>"
+    "</form>" + 
+    htmlPageTail(true)
+  ); 
+}
+
+void handleScheduleApiPost(AsyncWebServerRequest * request)
+{
+  if(!authorizeAccess(request))
+    return;
   
+  String host, path;
+  if(request->hasParam("scheduleApiHost", true) && request->hasParam("scheduleApiPath", true))
+  {
+    AsyncWebParameter* p = request->getParam("scheduleApiHost", true);
+    host = p->value();
+    host.trim();
+
+    p = request->getParam("scheduleApiPath", true);
+    path = p->value();
+    path.trim();
+    if(!path.startsWith("/"))
+    {
+      path = "/" + path;
+    }
+
+    if(host != settings.scheduleApiHost || path != settings.scheduleApiPath)
+    {
+      host.toCharArray(settings.scheduleApiHost, HOST_NAME_MAX_LENGTH-1);
+      path.toCharArray(settings.scheduleApiPath, URL_MAX_LENGTH-1);
+
+      EEPROM.put(0, settings);
+      EEPROM.commit();
+      showSettings(settings);
+    }
+
+    request->send(200, "text/html", 
+     htmlPageHead() +
+     "<h2>Settings saved!</h2>" + 
+     htmlPageTail(true)
+    );
+  }
+  else
+  {
+    request->send(200, "text/html", 
+     htmlPageHead() +
+     "<h2>Settings not saved!</h2>" + 
+     "<p>Parameter(s) missing</p>" + 
+     htmlPageTail(true)
+    );
+  }
+}
+/*
+void handleScheduleShow(AsyncWebServerRequest * request)
+{
+  if(!authorizeAccess(request))
+    return;
+
+  bool enableChanges = checkAccess(request);
+
+  //copying start times of active or pending schedules
+  
+  // Using bubble sort to sort 
+  
+  AsyncResponseStream *response = request->beginResponseStream("text/html");
+  response->print(htmlPageHead());
+  response->print("<h2>Lighting Schedule</h2>");
+
+
+
+  if(enableChanges)
+    response->print("<div><form method='POST' action='/schedule'><input type='submit' value='Reload Schedule'></form></div>");
+  response->print(htmlPageTail(false));
+  
+  request->send(response);   
+}
+
+void handleScheduleReloadReload(AsyncWebServerRequest * request)
+{
+  
+}
+*/
 void sendTestModeSettings(AsyncResponseStream *response)
 {
   response->print("The test mode uses following parameters: <br />");

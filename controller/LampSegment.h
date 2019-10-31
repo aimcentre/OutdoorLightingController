@@ -149,7 +149,6 @@ class LampSegment
     //Clearing the all LampCycle objects in the buffer
     for(int i=1; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
       mLampCycleList[i].Reset();
-    
   }
   
 };
