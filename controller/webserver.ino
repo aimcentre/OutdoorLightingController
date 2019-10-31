@@ -27,8 +27,8 @@ void initConfigServer()
   server.on("/scheduleapi", HTTP_GET, [](AsyncWebServerRequest * request){ handleScheduleApiGet(request);});
   server.on("/scheduleapi", HTTP_POST, [](AsyncWebServerRequest * request){ handleScheduleApiPost(request);});
 
-//  server.on("/schedule", HTTP_GET, [](AsyncWebServerRequest * request){ handleScheduleShow(request);});
-//  server.on("/schedule", HTTP_POST, [](AsyncWebServerRequest * request){ handleScheduleReloadReload(request);});
+  server.on("/schedule", HTTP_GET, [](AsyncWebServerRequest * request){ handleScheduleShow(request);});
+  server.on("/schedule", HTTP_POST, [](AsyncWebServerRequest * request){ handleScheduleReloadReload(request);});
   
   // Starting the webserver
   server.begin();
@@ -70,12 +70,17 @@ void handleRoot(AsyncWebServerRequest * request)
     response->print("<br /><a href='/wifi'>[Update]</a> ");    
   response->print("</div>");
 
+  response->print("<h2>Lamp Schedule</h2>");
+  response->print("<a href='/schedule'>[View Lamp Schedule]</a> ");  
+
   response->print("<h2>Lighting Settings</h2>");
   response->print("<div><ul>");
   response->print("<li>Regular Lamps-on Period: "); response->print(settings.regularLampOnTime); response->print(" seconds</li>");
   response->print("<li>Short Lamps-on Period: "); response->print(settings.auxiliaryLampOnTime); response->print(" seconds</li>");
   response->print("<li>Inter-segment Time Delay: "); response->print(settings.interSegmentDelay); response->print(" seconds</li>");
   response->print("<li>Day-light Threshold (0 - 4095): "); response->print(settings.dayLightThreshold); response->print("</li>");
+  response->print("<li>Schedule checking interval: "); response->print(settings.scheduleCheckInterval); response->print(" seconds</li>");
+
   response->print("</ul>");
   if(enableChanges)    
     response->print("<a href='/lighting'>[Update]</a> ");    
@@ -199,10 +204,11 @@ void handleLightingSettingsGet(AsyncWebServerRequest * request)
     htmlPageHead() +
     "<h2>Lighting System Parameters</h2>"
     "<form method='POST' action='/lighting'>"
-      "<label>Regular Lamp-on Time:</label> <input type='number' name='regOnTime', value='" + String(settings.regularLampOnTime) + "'><br />"
-      "<label>Short Lamp-on Time:</label> <input type='number' name='auxOnTime', value='" + String(settings.auxiliaryLampOnTime) + "'><br />"
-      "<label>Inter-segment Time Delay:</label> <input type='number' name='intSegDelay', value='" + String(settings.interSegmentDelay) + "'><br />"
-      "<label>Day-light Threshold (0 - 4095):</label> <input type='number' name='daylightThreshold', value='" + String(settings.dayLightThreshold) + "'><br />"
+      "<label>Regular Lamp-on Time (sec):</label> <input type='number' name='regOnTime', value='" + String(settings.regularLampOnTime) + "'><br /><br />"
+      "<label>Short Lamp-on Time (sec):</label> <input type='number' name='auxOnTime', value='" + String(settings.auxiliaryLampOnTime) + "'><br /><br />"
+      "<label>Inter-segment Time Delay (sec):</label> <input type='number' name='intSegDelay', value='" + String(settings.interSegmentDelay) + "'><br /><br />"
+      "<label>Night Darkness Threshold (0 - 4095):</label> <input type='number' name='daylightThreshold', value='" + String(settings.dayLightThreshold) + "'> Higher the threshold, darker it needs to be to turn lights on.<br /><br />"
+      "<label>Schedule checking interval (sec):</label> <input type='number' name='scheduleCheckInterval', value='" + String(settings.scheduleCheckInterval) + "'> Note: Press the hardware reset button on the controller to bring schedule-checking-interval changes into effect.<br /><br />"
       "<input type='submit' value='Update'>"
     "</form>" + 
     htmlPageTail(true)
@@ -256,6 +262,17 @@ void handleLightingSettingsPost(AsyncWebServerRequest * request)
       settingsChanged = true;
     }
   }
+
+  val = getIntParam(request, "scheduleCheckInterval", -1);
+  if(val > 0)
+  {
+    if(settings.scheduleCheckInterval != val)
+    {
+      settings.scheduleCheckInterval = val;
+      settingsChanged = true;
+    }
+  }
+
 
   if(settingsChanged)
   {
@@ -403,36 +420,79 @@ void handleScheduleApiPost(AsyncWebServerRequest * request)
     );
   }
 }
-/*
+
 void handleScheduleShow(AsyncWebServerRequest * request)
 {
-  if(!authorizeAccess(request))
-    return;
-
-  bool enableChanges = checkAccess(request);
-
-  //copying start times of active or pending schedules
-  
-  // Using bubble sort to sort 
-  
   AsyncResponseStream *response = request->beginResponseStream("text/html");
   response->print(htmlPageHead());
   response->print("<h2>Lighting Schedule</h2>");
 
+  response->print("<h3>Segment 1</h3>");
+  printSchedule(&gSegmentA, response);
+  
+  response->print("<h3>Segment 2</h3>");
+  printSchedule(&gSegmentB, response);
 
+  response->print("<h3>Segment 3</h3>");
+  printSchedule(&gSegmentC, response);
 
-  if(enableChanges)
-    response->print("<div><form method='POST' action='/schedule'><input type='submit' value='Reload Schedule'></form></div>");
-  response->print(htmlPageTail(false));
+  response->print("<h3>Segment 4</h3>");
+  printSchedule(&gSegmentD, response);  
+ 
+  if(authorizeAccess(request))
+  {
+    if(FetchScheduleFlag)
+    {
+      response->print("<div><br />Requested to download the schedule. It may take several seconds to download it.</div><div> <form method='GET' action='/schedule'><input type='submit' value='Refresh Page'></form></div>");
+    }
+    else
+    {
+      response->print("<div><form method='POST' action='/schedule'><input type='submit' value='Download Schedule'></form>Note: It may take several seconds to reload the schedule.</div>");
+    }
+    
+  }
+
+    
+  response->print(htmlPageTail(true));
   
   request->send(response);   
 }
 
 void handleScheduleReloadReload(AsyncWebServerRequest * request)
 {
-  
+  FetchScheduleFlag = true;
+  handleScheduleShow(request);
 }
-*/
+
+
+void printSchedule(volatile LampSegment* segment, AsyncResponseStream *response)
+{
+  unsigned short indexBuffer[LAMP_CYCLE_BUFFER_SIZE];
+  int numScheduledEvents = segment->GetSchedule(indexBuffer);
+  response->print("<ul>");
+  for(int i=0; i<numScheduledEvents; ++i)
+  {
+    response->print("<li>");
+    unsigned long offset = segment->mLampCycleList[indexBuffer[i]].mOffset;
+    unsigned long period = segment->mLampCycleList[indexBuffer[i]].mPeriod;
+    response->print(hms(offset));
+    response->print(" - ");
+    response->print(hms(offset + period));
+    response->print("</li>");
+  }
+  response->print("</ul>");
+}
+
+String hms(unsigned long timeInSeconds)
+{
+  int h = floor(timeInSeconds / 3600);
+  int t = timeInSeconds - h * 3600;
+  int m = floor(t/60);
+  int s = t - m * 60;
+
+  return h + String(":") + (m>9 ? m : (String("0") + m)) + ":" + (s>9 ? s : (String("0") + s));
+}
+
 void sendTestModeSettings(AsyncResponseStream *response)
 {
   response->print("The test mode uses following parameters: <br />");

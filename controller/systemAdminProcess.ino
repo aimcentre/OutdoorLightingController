@@ -12,7 +12,7 @@ void systemAdminProcess(void * parameter) {
   // Initializing the lamp-schedule timer
   lampScheduleTimer = timerBegin(1, 80, true);
   timerAttachInterrupt(lampScheduleTimer, &fetchScheduleISR, true);
-  timerAlarmWrite(lampScheduleTimer, SCHEDULE_CHECK_INTERVAL_SEC * 1000000, true);
+  timerAlarmWrite(lampScheduleTimer, settings.scheduleCheckInterval * 1000000, true);
   timerAlarmEnable(lampScheduleTimer);
 
   FetchScheduleFlag = true;

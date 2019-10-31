@@ -21,9 +21,9 @@ class LampSegment
   bool mLampStatus;
   bool mPrevLampStatus;
   
+  public:
   volatile LampCycle mLampCycleList[LAMP_CYCLE_BUFFER_SIZE];
 
-  public:
   LampSegment(unsigned int outputPin)
   {
     mOutputPin = outputPin;
@@ -149,6 +149,42 @@ class LampSegment
     //Clearing the all LampCycle objects in the buffer
     for(int i=1; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
       mLampCycleList[i].Reset();
+  }
+
+  /// Copies the indicies of the active or pending lamp cycles sorted in the ascending order
+  /// of their turn on offsets into the indexBuffer and then returns the number of indicies
+  /// copied (i.e. number of lamp segments which are either active or in pending states. The 
+  /// indexBuffer must have at least LAMP_CYCLE_BUFFER_SIZE number of elements.
+  int GetSchedule(unsigned short* indexBuffer) volatile
+  {
+
+    //copying the indicies of the active or pending lamp cycles to the buffer
+    int n = 0;
+    for (int i=0; i<LAMP_CYCLE_BUFFER_SIZE; ++i)
+    {
+      if(mLampCycleList[i].mPeriod > 0)
+        indexBuffer[n++] = i;
+    }
+
+    //using bubble sort algorithm to sort the indicies in the assending order of the offsets of the
+    //selected lamp cycles.
+    bool swapped = false;
+    do
+    {
+      for(int i=0; i<n-1; ++i)
+      {
+        if(mLampCycleList[indexBuffer[i+1]].mOffset < mLampCycleList[indexBuffer[i]].mOffset)
+        {
+          unsigned short tmp = indexBuffer[i+1];
+          indexBuffer[i+1] = indexBuffer[i];
+          indexBuffer[i] = indexBuffer[i+1];
+          swapped = true;
+        }
+      }      
+    }
+    while(swapped);
+
+    return n;
   }
   
 };
