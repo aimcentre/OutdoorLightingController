@@ -18,7 +18,7 @@ void systemMonitorProcess(void * parameter) {
       int darknessLevel = analogRead(DAYLIGHT_SENSOR);
       //Serial.printf("Ambient darkness: %d\r\n", darknessLevel);
   
-      if(darknessLevel > settings.dayLightThreshold)
+      if(gSunlightSensor.IsNight())
       {
         solid(B_LED, 500);
         //Serial.printf("Ambient level: %d Threshold: %d Color: Blue\r\n", darknessLevel, settings.dayLightThreshold);

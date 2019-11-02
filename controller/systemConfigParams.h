@@ -37,7 +37,9 @@ struct configSettings_t
 
   unsigned int interSegmentDelay;
 
-  unsigned int dayLightThreshold;
+  unsigned int darknessThresholdHigh;
+  unsigned int darknessThresholdLow;
+  
 
   unsigned int scheduleCheckInterval;
 };
@@ -58,12 +60,12 @@ configSettings_t settings;
 #define REG_LAMP_ON_TIME 480
 #define AUX_LAMP_ON_TIME 90
 #define INTER_SEG_DELAY 10
-#define DAYLIGHT_THRESHOLD 800
+#define DARKNESS_THRESHOLD 800
 
 // Test-mode lighting parameters. All time periods are in seconds
 #define TEST_REG_LAMP_ON_TIME 10
 #define TEST_AUX_LAMP_ON_TIME 6
 #define TEST_INTER_SEG_DELAY 4
-#define TEST_DAYLIGHT_THRESHOLD 4095
+#define TEST_DARKNESS_THRESHOLD 4095
 
 #define SCHEDULE_CHECK_INTERVAL_SEC 900

@@ -38,7 +38,8 @@ void loadConfigSettings(configSettings_t& settings)
     settings.regularLampOnTime = REG_LAMP_ON_TIME;
     settings.auxiliaryLampOnTime = AUX_LAMP_ON_TIME;
     settings.interSegmentDelay = INTER_SEG_DELAY;
-    settings.dayLightThreshold = DAYLIGHT_THRESHOLD;
+    settings.darknessThresholdHigh = DARKNESS_THRESHOLD;
+    settings.darknessThresholdLow = DARKNESS_THRESHOLD - 50;
     settings.scheduleCheckInterval = SCHEDULE_CHECK_INTERVAL_SEC;
 
     strncpy(settings.scheduleApiHost, SCHEDULE_RETREIAVER_HOST, HOST_NAME_MAX_LENGTH-1); 

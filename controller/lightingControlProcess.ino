@@ -104,17 +104,19 @@ void lightingControlProcess(void * parameter)
   {
     if (xSemaphoreTake(timerSemaphore, 0) == pdTRUE)
     {
-      int ambientDarkness = getDarknessLevel();
+      gSunlightSensor.OnTick();
+      bool isNight = gSunlightSensor.IsNight();
+      //Serial.printf("Is night: %d\r\n", isNight);
+      int ambientDarkness = gSunlightSensor.getDarknessLevel();
       
       // Locking the timer mutex, decrementing and coying lamp-state timer values, and releasing the mutex
       portENTER_CRITICAL(&resourceLock);
-      gSegmentA.OnTick(ambientDarkness, settings.dayLightThreshold);
-      gSegmentB.OnTick(ambientDarkness, settings.dayLightThreshold);
-      gSegmentC.OnTick(ambientDarkness, settings.dayLightThreshold);
-      gSegmentD.OnTick(ambientDarkness, settings.dayLightThreshold);
-      gSegmentE.OnTick(ambientDarkness, settings.dayLightThreshold);
+      gSegmentA.OnTick(isNight);
+      gSegmentB.OnTick(isNight);
+      gSegmentC.OnTick(isNight);
+      gSegmentD.OnTick(isNight);
+      gSegmentE.OnTick(isNight);
 
-      darknessLevel = ambientDarkness;
       portEXIT_CRITICAL(&resourceLock);
 
       //Turning on and off lamps as necessary
@@ -145,6 +147,7 @@ void lightingControlProcess(void * parameter)
         actions[4] = Report::eAction::NONE;
 
       portENTER_CRITICAL(&resourceLock);
+      darknessLevel = ambientDarkness;
       for(int i=0; i<5; ++i)
       {
         if(actions[i] != Report::eAction::NONE)
@@ -156,12 +159,6 @@ void lightingControlProcess(void * parameter)
     else
       delay(10);
   }
-  
-}
-
-int getDarknessLevel()
-{
-  return analogRead(DAYLIGHT_SENSOR);
 }
 
 void initLightingControlSystem()
@@ -230,17 +227,22 @@ void initLightingControlSystem()
   attachInterrupt(MOTION_F, &onMotionF, FALLING);
   attachInterrupt(MOTION_G, &onMotionG, FALLING);
 
+  gSunlightSensor.Initialize(DAYLIGHT_SENSOR, settings.darknessThresholdHigh, settings.darknessThresholdLow);
+
 /*
   // Setting up Access Point password-reset inturrupt
   attachInterrupt(WIFI_RESET, &onAccessPointPasswordResetBtnPressed, FALLING);
 */
 
-  // Turnning all lamps for 5 second
-  gSegmentA.Trigger(2, 5);
-  gSegmentB.Trigger(2, 5);
-  gSegmentC.Trigger(2, 5);
-  gSegmentD.Trigger(2, 5);
-  gSegmentE.Trigger(2, 5);
+  // If it's night time, turn all lamps for the default on time. Otherwise, turn them for 5 seconds.
+//  gSunlightSensor.OnTick();
+  unsigned long t = 5; //gSunlightSensor.IsNight() ? settings.regularLampOnTime : 5;
+//  Serial.println(t);
+  gSegmentA.Trigger(2, t);
+  gSegmentB.Trigger(2, t);
+  gSegmentC.Trigger(2, t);
+  gSegmentD.Trigger(2, t);
+  gSegmentE.Trigger(2, t);
   
   
 }

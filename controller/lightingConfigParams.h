@@ -1,10 +1,12 @@
 #include "hardwareConfiguration.h"
 #include "LampSegment.h"
 #include "Report.h"
+#include "SunlightSensor.h"
 
 #ifndef LIGHTING_PARAMETERS
 #define LIGHTING_PARAMETERS
 
+SunlightSensor gSunlightSensor;
                 
 volatile LampSegment gSegmentA(LAMP_PIN_A);
 volatile LampSegment gSegmentB(LAMP_PIN_B);

@@ -78,7 +78,8 @@ void handleRoot(AsyncWebServerRequest * request)
   response->print("<li>Regular Lamps-on Period: "); response->print(settings.regularLampOnTime); response->print(" seconds</li>");
   response->print("<li>Short Lamps-on Period: "); response->print(settings.auxiliaryLampOnTime); response->print(" seconds</li>");
   response->print("<li>Inter-segment Time Delay: "); response->print(settings.interSegmentDelay); response->print(" seconds</li>");
-  response->print("<li>Day-light Threshold (0 - 4095): "); response->print(settings.dayLightThreshold); response->print("</li>");
+  response->print("<li>Night Darkness High Threshold (0 - 4095): "); response->print(settings.darknessThresholdHigh); response->print("</li>");
+  response->print("<li>Night Darkness Low Threshold (0 - 4095): "); response->print(settings.darknessThresholdLow); response->print("</li>");
   response->print("<li>Schedule checking interval: "); response->print(settings.scheduleCheckInterval); response->print(" seconds</li>");
 
   response->print("</ul>");
@@ -207,8 +208,9 @@ void handleLightingSettingsGet(AsyncWebServerRequest * request)
       "<label>Regular Lamp-on Time (sec):</label> <input type='number' name='regOnTime', value='" + String(settings.regularLampOnTime) + "'><br /><br />"
       "<label>Short Lamp-on Time (sec):</label> <input type='number' name='auxOnTime', value='" + String(settings.auxiliaryLampOnTime) + "'><br /><br />"
       "<label>Inter-segment Time Delay (sec):</label> <input type='number' name='intSegDelay', value='" + String(settings.interSegmentDelay) + "'><br /><br />"
-      "<label>Night Darkness Threshold (0 - 4095):</label> <input type='number' name='daylightThreshold', value='" + String(settings.dayLightThreshold) + "'> Higher the threshold, darker it needs to be to turn lights on.<br /><br />"
-      "<label>Schedule checking interval (sec):</label> <input type='number' name='scheduleCheckInterval', value='" + String(settings.scheduleCheckInterval) + "'> Note: Press the hardware reset button on the controller to bring schedule-checking-interval changes into effect.<br /><br />"
+      "<label>Night Darkness High Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdHigh', value='" + String(settings.darknessThresholdHigh) + "'> Higher the threshold, darker it needs to be to turn lights on.<br /><br />"
+       "<label>Night Darkness Low Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdHLow', value='" + String(settings.darknessThresholdLow) + "'> This value must be smaller than Night Darkness High Threshold.<br /><br />"
+     "<label>Schedule checking interval (sec):</label> <input type='number' name='scheduleCheckInterval', value='" + String(settings.scheduleCheckInterval) + "'> Note: Press the hardware reset button on the controller to bring schedule-checking-interval changes into effect.<br /><br />"
       "<input type='submit' value='Update'>"
     "</form>" + 
     htmlPageTail(true)
@@ -253,12 +255,22 @@ void handleLightingSettingsPost(AsyncWebServerRequest * request)
     }
   }
 
-  val = getIntParam(request, "daylightThreshold", -1);
+  val = getIntParam(request, "darknessThresholdHigh", -1);
   if(val > 0)
   {
-    if(settings.dayLightThreshold != val)
+    if(settings.darknessThresholdHigh != val)
     {
-      settings.dayLightThreshold = val;
+      settings.darknessThresholdHigh = val;
+      settingsChanged = true;
+    }
+  }
+
+  val = getIntParam(request, "darknessThresholdLow", -1);
+  if(val > 0)
+  {
+    if(settings.darknessThresholdLow != val)
+    {
+      settings.darknessThresholdLow = val;
       settingsChanged = true;
     }
   }
@@ -332,7 +344,8 @@ void handleTestModePost(AsyncWebServerRequest * request)
       settings.regularLampOnTime = TEST_REG_LAMP_ON_TIME;
       settings.auxiliaryLampOnTime = TEST_AUX_LAMP_ON_TIME;
       settings.interSegmentDelay = TEST_INTER_SEG_DELAY;
-      settings.dayLightThreshold = TEST_DAYLIGHT_THRESHOLD;     
+      settings.darknessThresholdHigh = TEST_DARKNESS_THRESHOLD;
+      settings.darknessThresholdLow =  TEST_DARKNESS_THRESHOLD > 50 ? TEST_DARKNESS_THRESHOLD - 50 : 0;
     }
     else
     {
@@ -500,7 +513,7 @@ void sendTestModeSettings(AsyncResponseStream *response)
   response->print("Regular Lamps-on Period: "); response->print(TEST_REG_LAMP_ON_TIME); response->print(" seconds"); response->print("<br />");
   response->print("Short Lamps-on Period: "); response->print(TEST_AUX_LAMP_ON_TIME); response->print(" seconds"); response->print("<br />");
   response->print("Inter-segment Time Delay: "); response->print(TEST_INTER_SEG_DELAY); response->print(" seconds"); response->print("<br />");
-  response->print("Day-light Threshold (0 - 4095): "); response->print(TEST_DAYLIGHT_THRESHOLD); response->print("<br />");    
+  response->print("Day-light Threshold (0 - 4095): "); response->print(TEST_DARKNESS_THRESHOLD); response->print("<br />");    
   response->print("</div>"); 
 }
 

@@ -102,7 +102,7 @@ class LampSegment
     }     
   }
   
-  void OnTick(unsigned int ambientDarkness, unsigned int darknessThreshold) volatile
+  void OnTick(bool isNight) volatile
   {     
     //Invoking OnTick() of eachLampCycle to update their offsets and periods as necessary. 
     // Also checking whether there is at least one active LampCycle exists after updating
@@ -115,8 +115,7 @@ class LampSegment
         activeCycleFound = true;
     }
 
-    mAmbientDarkness = ambientDarkness;
-    mLampStatus = (ambientDarkness > darknessThreshold && activeCycleFound) ? ON : OFF;
+    mLampStatus = (isNight && activeCycleFound) ? ON : OFF;
   }
 
   bool Execute() volatile
