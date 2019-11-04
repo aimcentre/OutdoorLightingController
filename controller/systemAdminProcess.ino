@@ -92,6 +92,11 @@ void systemAdminProcess(void * parameter) {
           //Serial.printf("Processing %d report entries \r\n", numReportEntries);
           
           String params = String("?t=") + temperature + "&d=" + ambientDarkness;
+
+          if(PRODUCTION_MODE)
+            params = params + "&mode=prod";
+          else
+            params = params + "&mode=test";
                             
           for(int i=0; i<numReportEntries; ++i)
           {
@@ -115,6 +120,8 @@ void systemAdminProcess(void * parameter) {
               case Report::eAction::L3_OFF: params = params + "&s3=0&s3clk=" + timestamps[i]; break;
               case Report::eAction::L4_OFF: params = params + "&s4=0&s4clk=" + timestamps[i]; break;
               case Report::eAction::L5_OFF: params = params + "&s5=0&s5clk=" + timestamps[i]; break;
+
+              case Report::eAction::PING: break; //No motion to be reported; simply send the temperature and the ambient darkness, which are already among the parameters.
                 
             }
           }

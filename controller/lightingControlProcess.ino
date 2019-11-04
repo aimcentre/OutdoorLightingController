@@ -1,6 +1,8 @@
 // References: lamp segments and sensor locatoins: https://www.lucidchart.com/documents/edit/67ebf293-cd7d-4d02-a396-586ca6e3912b/alWyEGoyqXJH?referringApp=google+drive&beaconFlowId=f2d16d7b76909438
 // Triggering sequences: https://docs.google.com/spreadsheets/d/1fJMQOhua9JjkMa0Pfh4PbR-ifbYxZwPVFoGUY_oMN4c/edit#gid=0
 
+#include "appConfig.h"
+
 void IRAM_ATTR onTimer()
 {  
   // Enable timer semaphore so that the main lighting-control loop is unlocked
@@ -99,7 +101,9 @@ void IRAM_ATTR onMotionG()
 }
 
 void lightingControlProcess(void * parameter)
-{   
+{ 
+  unsigned long pingCounter = 0;
+   
   for(;;)
   {
     if (xSemaphoreTake(timerSemaphore, 0) == pdTRUE)
@@ -152,6 +156,27 @@ void lightingControlProcess(void * parameter)
       {
         if(actions[i] != Report::eAction::NONE)
           gReport.AddAction(actions[i]);
+      }
+
+      
+      if(gReport.GetActionCount() == 0)
+      {
+        //If no action  has been found, so increment the ping counter.
+        ++pingCounter;
+
+        if(pingCounter > 3600 / PINGS_PER_HOUR)
+        {
+          //Ping counter exceeds the maximum count that the this loop can pass without reporting to the Motion Tracker.
+          //Therefore, add a PING action to the report and reset the ping counter to 0
+          gReport.AddAction(Report::eAction::PING);
+          pingCounter = 0;
+        }
+      }
+      else
+      {
+        //Already an acion has ben performed. Therefore, we do not specifically add a "PING" action because the data is sent to
+        // the Motion Tracker by the already performed action, thus simply resent the ping counter.
+        pingCounter = 0;
       }
       portEXIT_CRITICAL(&resourceLock);
              
