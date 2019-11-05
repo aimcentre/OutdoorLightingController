@@ -41,11 +41,9 @@ void IRAM_ATTR onMotionC()
   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSC_TRIGGER);
   
-  // Turnning on the lamp segment B immediately for the default duration
+  // Turnning on the lamp segment B and C immediately for the default duration
   gSegmentB.Trigger(0, settings.regularLampOnTime);
-
-  // Scheduling lamp segment C to turn on for the auxiliary interval shortly after
-  gSegmentC.Trigger(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
+  gSegmentC.Trigger(0, settings.regularLampOnTime);
   
   portEXIT_CRITICAL(&resourceLock);
 }
