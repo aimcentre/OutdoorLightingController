@@ -55,7 +55,20 @@ class SunlightSensor
     }
     mDarknessLevel = mDarknessLevel / count;
 
-    // Forcing the Sunlight sensor to enable night mode until the buffer has at least 5 readins
+    // Hysteresis based thresholding
+    if(mIsNight)
+    {
+      if(mDarknessLevel < mDarknessThresholdLow)
+        mIsNight = false;
+    }
+    else
+    {
+      if(mDarknessLevel > mDarknessThresholdHigh)
+        mIsNight = true;
+    }
+
+/*
+    // Forcing the Sunlight sensor to enable night mode until the buffer has at least 5 readings
     if(count <= 5)
     {
       mIsNight = true;
@@ -73,7 +86,7 @@ class SunlightSensor
           mIsNight = true;
       }
     }
-
+*/
     //Serial.printf("Darkness Level = %d, High = %d, Low = %d\r\n", mDarknessLevel, mDarknessThresholdHigh, mDarknessThresholdLow);
     //Serial.printf("Is Night = %d\r\n", mIsNight);
   }

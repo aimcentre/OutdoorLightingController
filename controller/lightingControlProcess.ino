@@ -258,9 +258,9 @@ void initLightingControlSystem()
 */
 
   // If it's night time, turn all lamps for the default on time. Otherwise, turn them for 5 seconds.
-//  gSunlightSensor.OnTick();
-  unsigned long t = 5; //gSunlightSensor.IsNight() ? settings.regularLampOnTime : 5;
-//  Serial.println(t);
+  gSunlightSensor.OnTick();
+  unsigned long t = gSunlightSensor.IsNight() ? settings.regularLampOnTime : 5;  
+  Serial.printf("Initial on time: %d\r\n", t);
   gSegmentA.Trigger(2, t);
   gSegmentB.Trigger(2, t);
   gSegmentC.Trigger(2, t);
