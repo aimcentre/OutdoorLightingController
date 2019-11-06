@@ -41,6 +41,7 @@ void loadConfigSettings(configSettings_t& settings)
     settings.darknessThresholdHigh = DARKNESS_THRESHOLD;
     settings.darknessThresholdLow = DARKNESS_THRESHOLD - 50;
     settings.scheduleCheckInterval = SCHEDULE_CHECK_INTERVAL_SEC;
+    settings.reportingInterval = REPORTING_INTERVAL_SEC;
 
     strncpy(settings.scheduleApiHost, SCHEDULE_RETREIAVER_HOST, HOST_NAME_MAX_LENGTH-1); 
     settings.scheduleApiHost[HOST_NAME_MAX_LENGTH-1] = '\0';

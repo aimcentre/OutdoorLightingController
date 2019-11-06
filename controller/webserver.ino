@@ -81,6 +81,7 @@ void handleRoot(AsyncWebServerRequest * request)
   response->print("<li>Night Darkness High Threshold (0 - 4095): "); response->print(settings.darknessThresholdHigh); response->print("</li>");
   response->print("<li>Night Darkness Low Threshold (0 - 4095): "); response->print(settings.darknessThresholdLow); response->print("</li>");
   response->print("<li>Schedule checking interval: "); response->print(settings.scheduleCheckInterval); response->print(" seconds</li>");
+  response->print("<li>Reporting interval: "); response->print(settings.reportingInterval); response->print(" seconds</li>");
 
   response->print("</ul>");
   if(enableChanges)    
@@ -209,8 +210,9 @@ void handleLightingSettingsGet(AsyncWebServerRequest * request)
       "<label>Short Lamp-on Time (sec):</label> <input type='number' name='auxOnTime', value='" + String(settings.auxiliaryLampOnTime) + "'><br /><br />"
       "<label>Inter-segment Time Delay (sec):</label> <input type='number' name='intSegDelay', value='" + String(settings.interSegmentDelay) + "'><br /><br />"
       "<label>Night Darkness High Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdHigh', value='" + String(settings.darknessThresholdHigh) + "'> Higher the threshold, darker it needs to be to turn lights on.<br /><br />"
-       "<label>Night Darkness Low Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdHLow', value='" + String(settings.darknessThresholdLow) + "'> This value must be smaller than Night Darkness High Threshold.<br /><br />"
-     "<label>Schedule checking interval (sec):</label> <input type='number' name='scheduleCheckInterval', value='" + String(settings.scheduleCheckInterval) + "'> Note: Press the hardware reset button on the controller to bring schedule-checking-interval changes into effect.<br /><br />"
+      "<label>Night Darkness Low Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdHLow', value='" + String(settings.darknessThresholdLow) + "'> This value must be smaller than Night Darkness High Threshold.<br /><br />"
+      "<label>Schedule checking interval (sec):</label> <input type='number' name='scheduleCheckInterval', value='" + String(settings.scheduleCheckInterval) + "'> Note: Press the hardware reset button on the controller to make changes effective.<br /><br />"
+      "<label>Reporting interval (sec):</label> <input type='number' name='reportingInterval', value='" + String(settings.reportingInterval) + "'><br /><br />"
       "<input type='submit' value='Update'>"
     "</form>" + 
     htmlPageTail(true)
@@ -281,6 +283,16 @@ void handleLightingSettingsPost(AsyncWebServerRequest * request)
     if(settings.scheduleCheckInterval != val)
     {
       settings.scheduleCheckInterval = val;
+      settingsChanged = true;
+    }
+  }
+
+  val = getIntParam(request, "reportingInterval", -1);
+  if(val > 0)
+  {
+    if(settings.reportingInterval != val)
+    {
+      settings.reportingInterval = val;
       settingsChanged = true;
     }
   }

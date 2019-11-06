@@ -1,8 +1,8 @@
 #ifndef _REPORT_H
 #define _REPORT_H
 
-#define REPORT_BUFFER_SIZE 50
-#define ACTION_HISTORY_LENGTH 50
+//#define REPORT_BUFFER_SIZE 50
+#define ACTION_HISTORY_LENGTH 10
 
 class ActionHistory
 {
@@ -36,11 +36,12 @@ class ActionHistory
       return "";
 
     String ret = String(Count) + ":";
-    for(int i=0; i<Count; ++i)
+    int maxTimestamps = Count < ACTION_HISTORY_LENGTH ? Count : ACTION_HISTORY_LENGTH;
+    for(int i=0; i<maxTimestamps; ++i)
     {
       ret = ret + String(Timestamps[i]);
-      if(i < Count)
-        ret = ret+ ",";
+      if(i < (maxTimestamps-1))
+        ret = ret + ",";
     }
     
     return ret;
@@ -56,9 +57,9 @@ class Report
               NUM_TOKENS};
 
   private:
-  volatile eAction mAction[REPORT_BUFFER_SIZE];
-  volatile unsigned long mTimestamps[REPORT_BUFFER_SIZE];
-  volatile unsigned int mIndex;
+//  volatile eAction mAction[REPORT_BUFFER_SIZE];
+//  volatile unsigned long mTimestamps[REPORT_BUFFER_SIZE];
+//  volatile unsigned int mIndex;
 
   public:
   volatile ActionHistory ActionHistories[NUM_TOKENS];
@@ -68,7 +69,7 @@ class Report
   
   Report()
   {
-    mIndex = 0;
+ //   mIndex = 0;
     Reset();
   }
 
@@ -189,7 +190,7 @@ class Report
            ;
            */
   }
-  
+/*  
   int ExportTriggers(eAction* actionBuffer, unsigned long* timestampBuffer) volatile
   {
     // Copying data to the destination buffer
@@ -206,6 +207,7 @@ class Report
     // Returning the number of trigers coppied
     return count;
   }
+*/
 };
 
 

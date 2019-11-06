@@ -4,7 +4,7 @@
 //    If you change anything in this file, please make sure to change the value of the following CONFIG_VERSION constant to
 //    something other than what is already stored for it in the ESP32 board. Otherwise, the changes will not be saved on the board.
 //    To find what CONFIG_VERSION is in the board, please reset the board while monitoring its serial debugger output.
-#define CONFIG_VERSION 2
+#define CONFIG_VERSION 1
 
 // Maximum lengths of string values used for the fields of the configSettings_t structure. These maximum lenghts
 // include the space for the null termination characters, meaning that the actual readable length of the string will
@@ -42,6 +42,7 @@ struct configSettings_t
   
 
   unsigned int scheduleCheckInterval;
+  unsigned int reportingInterval;
 };
 
 configSettings_t settings;
@@ -69,3 +70,4 @@ configSettings_t settings;
 #define TEST_DARKNESS_THRESHOLD 4095
 
 #define SCHEDULE_CHECK_INTERVAL_SEC 900
+#define REPORTING_INTERVAL_SEC 900

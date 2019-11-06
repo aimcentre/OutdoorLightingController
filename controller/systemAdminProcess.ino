@@ -16,7 +16,7 @@ void systemAdminProcess(void * parameter) {
   timerAlarmEnable(lampScheduleTimer);
 
   FetchScheduleFlag = true;
-  unsigned long lastReported = 0;
+  unsigned long lastReportTimestampInSeconds = 0;
   for(;;) 
   {
 
@@ -78,7 +78,10 @@ void systemAdminProcess(void * parameter) {
       bool hasActivities = gReport.HasActivities();
       portEXIT_CRITICAL(&resourceLock);
 
-      if(hasActivities)
+      unsigned long currentTimestampInSeconds = millis() / 1000;
+      bool clockRecycled = currentTimestampInSeconds < lastReportTimestampInSeconds;
+      bool aggregationPeriodElapsed = (currentTimestampInSeconds - lastReportTimestampInSeconds) >= settings.reportingInterval;
+      if(hasActivities && (clockRecycled || aggregationPeriodElapsed))
       {
         WiFiClientSecure client;
         const int httpPort = 443;
@@ -111,7 +114,8 @@ void systemAdminProcess(void * parameter) {
           //Serial.println(dataEncodedUrl);
 
           client.stop();
-      
+
+          lastReportTimestampInSeconds = currentTimestampInSeconds;
       }
 
       /*
