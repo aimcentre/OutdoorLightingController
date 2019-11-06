@@ -157,7 +157,7 @@ void lightingControlProcess(void * parameter)
       }
 
       
-      if(gReport.GetActionCount() == 0)
+      if(gReport.HasActivities() == false)
       {
         //If no action  has been found, so increment the ping counter.
         ++pingCounter;

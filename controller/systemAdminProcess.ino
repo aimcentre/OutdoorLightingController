@@ -16,7 +16,7 @@ void systemAdminProcess(void * parameter) {
   timerAlarmEnable(lampScheduleTimer);
 
   FetchScheduleFlag = true;
-  
+  unsigned long lastReported = 0;
   for(;;) 
   {
 
@@ -65,18 +65,56 @@ void systemAdminProcess(void * parameter) {
     // where, append the motion sensor states asquery parameters. Use the query variable names to match exactly (case sensitive) the column names.
     // Check the App Script project of the spreadsheet for details.
     
-   if(WiFi.status() == WL_CONNECTED)
-   {
+    if(WiFi.status() == WL_CONNECTED)
+    {
       int ambientDarkness = 0;
-      Report::eAction actions[REPORT_BUFFER_SIZE];
-      unsigned long timestamps[REPORT_BUFFER_SIZE];
-      int numReportEntries = 0;
+//      Report::eAction actions[REPORT_BUFFER_SIZE];
+//      unsigned long timestamps[REPORT_BUFFER_SIZE];
+//      int numReportEntries = 0;
       
       portENTER_CRITICAL(&resourceLock);
       ambientDarkness = darknessLevel;
-      numReportEntries = gReport.ExportTriggers(actions, timestamps);
+      //numReportEntries = gReport.ExportTriggers(actions, timestamps);
+      bool hasActivities = gReport.HasActivities();
       portEXIT_CRITICAL(&resourceLock);
 
+      if(hasActivities)
+      {
+        WiFiClientSecure client;
+        const int httpPort = 443;
+        if (!client.connect(spreadsheetHost, httpPort)) 
+        {
+          Serial.println("Connection failed");
+          return;
+        }
+
+        float temperature = getTemperature();
+        String params = String("?t=") + temperature + "&d=" + ambientDarkness;
+        
+        if(PRODUCTION_MODE)
+          params = params + "&mode=prod";
+        else
+          params = params + "&mode=test&";
+
+        portENTER_CRITICAL(&resourceLock);
+        params = params + gReport.Export();
+        gReport.Reset();
+        portEXIT_CRITICAL(&resourceLock);
+
+        String dataEncodedUrl = url + params;
+          //Serial.println(dataEncodedUrl);
+          Serial.println(params);
+          client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
+             "Host: " + spreadsheetHost + "\r\n" + 
+             "Connection: close\r\n\r\n");
+
+          //Serial.println(dataEncodedUrl);
+
+          client.stop();
+      
+      }
+
+      /*
       if(numReportEntries > 0)
       {
           WiFiClientSecure client;
@@ -134,8 +172,8 @@ void systemAdminProcess(void * parameter) {
              "Connection: close\r\n\r\n");
 
           client.stop();
-       }
-
+      }
+*/
 
         if(FetchScheduleFlag)
         {
