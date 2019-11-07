@@ -63,7 +63,7 @@ class SunlightSensor
     }
     else
     {
-      if(mDarknessLevel > mDarknessThresholdHigh)
+      if(mDarknessLevel >= mDarknessThresholdHigh)
         mIsNight = true;
     }
 

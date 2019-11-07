@@ -32,6 +32,9 @@ void IRAM_ATTR onMotionB()
   // Turnning on the lamp segments A and B immediately for the default duration
   gSegmentA.Trigger(0, settings.regularLampOnTime);
   gSegmentB.Trigger(0, settings.regularLampOnTime);
+
+  // Scheduling lamp segment C to turn on for the auxiliary interval after the inter-segment delay
+  gSegmentC.Trigger(settings.interSegmentDelay, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&resourceLock);
 }
@@ -123,27 +126,27 @@ void lightingControlProcess(void * parameter)
 
       //Turning on and off lamps as necessary
       Report::eAction actions[5];
-      if(gSegmentA.Execute())
+      if(gSegmentA.Execute(settings.segmentMask[0]))
         actions[0] = gSegmentA.GetStatus() == ON ? Report::eAction::L1_ON : Report::eAction::L1_OFF;
       else
         actions[0] = Report::eAction::NONE;
 
-      if(gSegmentB.Execute())
+      if(gSegmentB.Execute(settings.segmentMask[1]))
         actions[1] = gSegmentB.GetStatus() == ON ? Report::eAction::L2_ON : Report::eAction::L2_OFF;
       else
         actions[1] = Report::eAction::NONE;
 
-      if(gSegmentC.Execute())
+      if(gSegmentC.Execute(settings.segmentMask[2]))
         actions[2] = gSegmentC.GetStatus() == ON ? Report::eAction::L3_ON : Report::eAction::L3_OFF;
       else
         actions[2] = Report::eAction::NONE;
 
-      if(gSegmentD.Execute())
+      if(gSegmentD.Execute(settings.segmentMask[3]))
         actions[3] = gSegmentD.GetStatus() == ON ? Report::eAction::L4_ON : Report::eAction::L4_OFF;
       else
         actions[3] = Report::eAction::NONE;
 
-      if(gSegmentE.Execute())
+      if(gSegmentE.Execute(settings.segmentMask[4]))
         actions[4] = gSegmentE.GetStatus() == ON ? Report::eAction::L5_ON : Report::eAction::L5_OFF;
       else
         actions[4] = Report::eAction::NONE;

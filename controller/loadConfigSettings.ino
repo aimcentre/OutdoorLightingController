@@ -42,6 +42,14 @@ void loadConfigSettings(configSettings_t& settings)
     settings.darknessThresholdLow = DARKNESS_THRESHOLD - 50;
     settings.scheduleCheckInterval = SCHEDULE_CHECK_INTERVAL_SEC;
     settings.reportingInterval = REPORTING_INTERVAL_SEC;
+    
+    settings.segmentMask[0] = true;
+    settings.segmentMask[1] = true;
+    settings.segmentMask[2] = true;
+    settings.segmentMask[3] = true;
+
+    for(int i=0; i<5; ++i)
+      settings.segmentMask[i] = true;
 
     strncpy(settings.scheduleApiHost, SCHEDULE_RETREIAVER_HOST, HOST_NAME_MAX_LENGTH-1); 
     settings.scheduleApiHost[HOST_NAME_MAX_LENGTH-1] = '\0';

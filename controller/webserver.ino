@@ -30,6 +30,9 @@ void initConfigServer()
   server.on("/schedule", HTTP_GET, [](AsyncWebServerRequest * request){ handleScheduleShow(request);});
   server.on("/schedule", HTTP_POST, [](AsyncWebServerRequest * request){ handleScheduleReloadReload(request);});
   
+  server.on("/segctrl", HTTP_GET, [](AsyncWebServerRequest * request){ handleSegmentControlGet(request);});
+  server.on("/segctrl", HTTP_POST, [](AsyncWebServerRequest * request){ handleSegmentControlPost(request);});
+  
   // Starting the webserver
   server.begin();
   
@@ -72,6 +75,17 @@ void handleRoot(AsyncWebServerRequest * request)
 
   response->print("<h2>Lamp Schedule</h2>");
   response->print("<a href='/schedule'>[View Lamp Schedule]</a> ");  
+
+  response->print("<h2>Segment Modes</h2>");
+  response->print("<div><ul>");
+  response->print("<li>Segment 1: "); response->print(settings.segmentMask[0] ? "Auto" : "Off"); response->println("</li>");
+  response->print("<li>Segment 2: "); response->print(settings.segmentMask[1] ? "Auto" : "Off"); response->println("</li>");
+  response->print("<li>Segment 3: "); response->print(settings.segmentMask[2] ? "Auto" : "Off"); response->println("</li>");
+  response->print("<li>Segment 4: "); response->print(settings.segmentMask[3] ? "Auto" : "Off"); response->println("</li>");
+  response->print("</ul>");
+  if(enableChanges)    
+    response->print("<a href='/segctrl'>[Update]</a> ");    
+  response->print("</div><br />");
 
   response->print("<h2>Lighting Settings</h2>");
   response->print("<div><ul>");
@@ -210,7 +224,7 @@ void handleLightingSettingsGet(AsyncWebServerRequest * request)
       "<label>Short Lamp-on Time (sec):</label> <input type='number' name='auxOnTime', value='" + String(settings.auxiliaryLampOnTime) + "'><br /><br />"
       "<label>Inter-segment Time Delay (sec):</label> <input type='number' name='intSegDelay', value='" + String(settings.interSegmentDelay) + "'><br /><br />"
       "<label>Night Darkness High Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdHigh', value='" + String(settings.darknessThresholdHigh) + "'> Higher the threshold, darker it needs to be to turn lights on.<br /><br />"
-      "<label>Night Darkness Low Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdHLow', value='" + String(settings.darknessThresholdLow) + "'> This value must be smaller than Night Darkness High Threshold.<br /><br />"
+      "<label>Night Darkness Low Threshold (0 - 4095):</label> <input type='number' name='darknessThresholdLow', value='" + String(settings.darknessThresholdLow) + "'> This value must be smaller than Night Darkness High Threshold.<br /><br />"
       "<label>Schedule checking interval (sec):</label> <input type='number' name='scheduleCheckInterval', value='" + String(settings.scheduleCheckInterval) + "'> Note: Press the hardware reset button on the controller to make changes effective.<br /><br />"
       "<label>Reporting interval (sec):</label> <input type='number' name='reportingInterval', value='" + String(settings.reportingInterval) + "'><br /><br />"
       "<input type='submit' value='Update'>"
@@ -379,6 +393,85 @@ void handleTestModePost(AsyncWebServerRequest * request)
     handleTestModeGet(request);
   }
 } 
+
+void handleSegmentControlGet(AsyncWebServerRequest * request)
+{
+  if(!authorizeAccess(request))
+    return;
+      
+  request->send(200, "text/html", 
+    htmlPageHead() +
+    "<h2>Lighting Segment Control Mode</h2>"
+    "<form method='POST' action='/segctrl'>"
+      "<label>Segment 1:</label>"
+      "<input name='segA' type='radio' value='1' " + (settings.segmentMask[0] ? "checked='checked'" : "") + " /> Auto "
+      "<input name='segA' type='radio' value='0' " + (!settings.segmentMask[0] ? "checked='checked'" : "") + " /> Off <br /><br />"
+      "<label>Segment 2:</label>"
+      "<input name='segB' type='radio' value='1' " + (settings.segmentMask[1] ? "checked='checked'" : "") + " /> Auto "
+      "<input name='segB' type='radio' value='0' " + (!settings.segmentMask[1] ? "checked='checked'" : "") + " /> Off <br /><br />"
+      "<label>Segment 3:</label>"
+      "<input name='segC' type='radio' value='1' " + (settings.segmentMask[2] ? "checked='checked'" : "") + " /> Auto "
+      "<input name='segC' type='radio' value='0' " + (!settings.segmentMask[2] ? "checked='checked'" : "") + " /> Off <br /><br />"
+      "<label>Segment 4:</label>"
+      "<input name='segD' type='radio' value='1' " + (settings.segmentMask[3] ? "checked='checked'" : "") + " /> Auto "
+      "<input name='segD' type='radio' value='0' " + (!settings.segmentMask[3] ? "checked='checked'" : "") + " /> Off <br /><br />"
+      "<input type='submit' value='Update'>"
+    "</form>" + 
+    htmlPageTail(true)
+  ); 
+}
+
+void handleSegmentControlPost(AsyncWebServerRequest * request)
+{
+  if(!authorizeAccess(request))
+    return;
+    
+  bool settingsChanged = false;
+  bool val;
+
+  val = getIntParam(request, "segA", 0) == 1;
+  Serial.print("Seg A Mode: "); Serial.println(val);
+  if(settings.segmentMask[0] !=  val)
+  {
+    settings.segmentMask[0] = val;
+    settingsChanged = true;
+  }
+
+  val = getIntParam(request, "segB", 0) == 1;
+  if(settings.segmentMask[1] !=  val)
+  {
+    settings.segmentMask[1] = val;
+    settingsChanged = true;
+  }
+
+  val = getIntParam(request, "segC", 0) == 1;
+  if(settings.segmentMask[2] !=  val)
+  {
+    settings.segmentMask[2] = val;
+    settingsChanged = true;
+  }
+
+  val = getIntParam(request, "segD", 0) == 1;
+  if(settings.segmentMask[3] !=  val)
+  {
+    settings.segmentMask[3] = val;
+    settingsChanged = true;
+  }
+
+
+  if(settingsChanged)
+  {
+    EEPROM.put(0, settings);
+    EEPROM.commit();
+    delay(500);
+  }
+
+  request->send(200, "text/html", 
+    htmlPageHead() +
+    "<h2>Settings saved!</h2>" + 
+    htmlPageTail(true)
+  );  
+}
 
 
 void handleScheduleApiGet(AsyncWebServerRequest * request)

@@ -1,8 +1,8 @@
 #ifndef _REPORT_H
 #define _REPORT_H
 
-//#define REPORT_BUFFER_SIZE 50
 #define ACTION_HISTORY_LENGTH 10
+#define SEPARATOR ";"
 
 class ActionHistory
 {
@@ -57,11 +57,6 @@ class Report
               NUM_TOKENS};
 
   private:
-//  volatile eAction mAction[REPORT_BUFFER_SIZE];
-//  volatile unsigned long mTimestamps[REPORT_BUFFER_SIZE];
-//  volatile unsigned int mIndex;
-
-  public:
   volatile ActionHistory ActionHistories[NUM_TOKENS];
 
   public:
@@ -69,23 +64,12 @@ class Report
   
   Report()
   {
- //   mIndex = 0;
     Reset();
   }
 
   void AddAction(eAction action) volatile
   {
-    /*
-    int idx = mIndex < REPORT_BUFFER_SIZE - 1 ? mIndex++ : REPORT_BUFFER_SIZE - 1;
-
-    mAction[idx] = action;
-    mTimestamps[idx] = millis();
-    //Serial.printf("Idx =  %d\r\n", idx);
-    */
-
-    //Serial.print("Added action: "); Serial.println(action);
     ActionHistories[action].LogOccurance();
-    //Serial.print("Count: "); Serial.println(ActionHistories[action].Count);
   }
 
   void Reset() volatile
@@ -94,12 +78,6 @@ class Report
     for(int i=0; i<NUM_TOKENS; ++i)
       ActionHistories[i].Reset();
   }
-
-/*  int GetActionCount() volatile
-  {
-    return mIndex;
-  }
-*/
 
   bool HasActivities() volatile
   {    
@@ -112,8 +90,6 @@ class Report
 
   String Export() volatile
   {
-    Serial.println("L1_ON ... " + String(ActionHistories[L1_ON].Count));
-
     String ret = "";
 
     if(ActionHistories[MSA_TRIGGER].Count > 0)
@@ -138,76 +114,32 @@ class Report
       ret = ret + "&mG=" + ActionHistories[MSG_TRIGGER].Export();
 
       
-
     if(ActionHistories[L1_ON].Count > 0)
       ret = ret + "&s1=1:" + ActionHistories[L1_ON].Export();
     
-     if(ActionHistories[L1_OFF].Count > 0)
-      ret = ret + ":0:" + ActionHistories[L1_OFF].Export();
+    if(ActionHistories[L1_OFF].Count > 0)
+      ret = ret + (ActionHistories[L1_ON].Count > 0 ? SEPARATOR : "&s1=") + "0:" + ActionHistories[L1_OFF].Export();
   
     if(ActionHistories[L2_ON].Count > 0)
       ret = ret + "&s2=1:" + ActionHistories[L2_ON].Export();
     
-     if(ActionHistories[L2_OFF].Count > 0)
-      ret = ret + ":0:" + ActionHistories[L2_OFF].Export();
+    if(ActionHistories[L2_OFF].Count > 0)
+       ret = ret + (ActionHistories[L2_ON].Count > 0 ? SEPARATOR : "&s2=") + "0:" + ActionHistories[L2_OFF].Export();
   
     if(ActionHistories[L3_ON].Count > 0)
       ret = ret + "&s3=1:" + ActionHistories[L3_ON].Export();
     
      if(ActionHistories[L3_OFF].Count > 0)
-      ret = ret + ":0:" + ActionHistories[L3_OFF].Export();
+      ret = ret + (ActionHistories[L3_ON].Count > 0 ? SEPARATOR : "&s3=") + "0:" + ActionHistories[L3_OFF].Export();
   
     if(ActionHistories[L4_ON].Count > 0)
       ret = ret + "&s4=1:" + ActionHistories[L4_ON].Export();
     
      if(ActionHistories[L4_OFF].Count > 0)
-      ret = ret + ":0:" + ActionHistories[L4_OFF].Export();
+      ret = ret + (ActionHistories[L4_ON].Count > 0 ? SEPARATOR : "&s4=") + "0:" + ActionHistories[L4_OFF].Export();
   
     return ret;
-/*    
-    return ActionHistories[MSA_TRIGGER].Count > 0 ? ("mA=" + ActionHistories[MSA_TRIGGER].Export()) : "" +
-           ActionHistories[MSB_TRIGGER].Count > 0 ? ("&mB=" + ActionHistories[MSB_TRIGGER].Export()) : "" +
-           ActionHistories[MSC_TRIGGER].Count > 0 ? ("&mC=" + ActionHistories[MSC_TRIGGER].Export()) : "" +
-           ActionHistories[MSD_TRIGGER].Count > 0 ? ("&mD=" + ActionHistories[MSD_TRIGGER].Export()) : "" +
-           ActionHistories[MSE_TRIGGER].Count > 0 ? ("&mE=" + ActionHistories[MSE_TRIGGER].Export()) : "" +
-           ActionHistories[MSF_TRIGGER].Count > 0 ? ("&mF=" + ActionHistories[MSF_TRIGGER].Export()) : "" +
-           ActionHistories[MSG_TRIGGER].Count > 0 ? ("&mG=" + ActionHistories[MSG_TRIGGER].Export()) : "" +
-           
-           ActionHistories[L1_ON].Count > 0 ? ("&s1=1" + ActionHistories[eAction::L1_ON].Export()) : "" +
- //          ActionHistories[L1_OFF].Count > 0 ? (";0:" + ActionHistories[eAction::L1_OFF].Export()) : "" +
-
-           ActionHistories[L2_ON].Count > 0 ? ("&s2=1:" + ActionHistories[eAction::L2_ON].Export()) : "" +
- //          ActionHistories[L2_OFF].Count > 0 ? (";0:" + ActionHistories[eAction::L2_OFF].Export()) : "" +
-
-           ActionHistories[L3_ON].Count > 0 ? ("&s3=1:" + ActionHistories[L3_ON].Export()) : "" +
- //          ActionHistories[L3_OFF].Count > 0 ? (";0:" + ActionHistories[L3_OFF].Export()) : "" +
-
-           ActionHistories[L4_ON].Count > 0 ? ("&s4=1:" + ActionHistories[L4_ON].Export()) : "" +
- //          ActionHistories[L4_OFF].Count > 0 ? (";0:" + ActionHistories[L4_OFF].Export()) : "" +
-
-           ActionHistories[L5_ON].Count > 0 ? ("&s5=1:" + ActionHistories[L5_ON].Export()) : "" 
- //          ActionHistories[L5_OFF].Count > 0 ? ("'0:" + ActionHistories[L5_OFF].Export()) : ""
-           ;
-           */
   }
-/*  
-  int ExportTriggers(eAction* actionBuffer, unsigned long* timestampBuffer) volatile
-  {
-    // Copying data to the destination buffer
-    int count = mIndex < REPORT_BUFFER_SIZE ? mIndex : REPORT_BUFFER_SIZE;
-    for(int i=0; i<count; ++i)
-    {
-      *(actionBuffer + i) = mAction[i];
-      *(timestampBuffer + i) = mTimestamps[i];
-    }
-
-    // Resetting the index
-    mIndex = 0;
-
-    // Returning the number of trigers coppied
-    return count;
-  }
-*/
 };
 
 

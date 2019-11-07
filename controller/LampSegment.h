@@ -118,14 +118,25 @@ class LampSegment
     mLampStatus = (isNight && activeCycleFound) ? ON : OFF;
   }
 
-  bool Execute() volatile
+  bool Execute(bool ctrlMask) volatile
   {
-    if(mPrevLampStatus != mLampStatus)
+    if(ctrlMask)
     {
-      digitalWrite(mOutputPin, mLampStatus);
-      mPrevLampStatus = mLampStatus;
-
-      return true;
+      if(mPrevLampStatus != mLampStatus)
+      {
+        digitalWrite(mOutputPin, mLampStatus);
+        mPrevLampStatus = mLampStatus;
+        return true;
+      }
+    }
+    else
+    {
+      if(mPrevLampStatus)
+      {
+        digitalWrite(mOutputPin, false);
+        mPrevLampStatus = false;
+        return true;
+      }
     }
     
     return false;    
