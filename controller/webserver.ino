@@ -587,7 +587,7 @@ void printSchedule(volatile LampSegment* segment, AsyncResponseStream *response)
 {
   unsigned short indexBuffer[LAMP_CYCLE_BUFFER_SIZE];
   int numScheduledEvents = segment->GetSchedule(indexBuffer);
-  response->print("<ul>");
+  response->print("<ol>");
   for(int i=0; i<numScheduledEvents; ++i)
   {
     response->print("<li>");
@@ -598,7 +598,7 @@ void printSchedule(volatile LampSegment* segment, AsyncResponseStream *response)
     response->print(hms(offset + period));
     response->print("</li>");
   }
-  response->print("</ul>");
+  response->print("</ol>");
 }
 
 String hms(unsigned long timeInSeconds)

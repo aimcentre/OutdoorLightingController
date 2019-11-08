@@ -2,7 +2,7 @@
 #define _REPORT_H
 
 #define ACTION_HISTORY_LENGTH 10
-#define SEPARATOR ";"
+#define SEPARATOR "_"
 
 class ActionHistory
 {

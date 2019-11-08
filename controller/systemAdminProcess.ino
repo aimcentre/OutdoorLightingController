@@ -202,7 +202,7 @@ void ReloadSchedule()
   {
     //NOTE: Use Arduino Json Assitant to Calculate Document Size
     //      https://arduinojson.org/v5/assistant/
-    StaticJsonDocument<2048> doc;
+    StaticJsonDocument<SCHEDULE_OBJECT_SIZE> doc;
     DeserializationError error = deserializeJson(doc, schedule);
   
     if (error) 
