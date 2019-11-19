@@ -5,5 +5,5 @@
 #define PRODUCTION_MODE false
 
 const char* LOGGER_URL_HOST = "script.google.com";
-String PRODUCTION_LOGGER_URL_PATH = "/a/abva.org/macros/s/AKfycbzemWeh-tI5kByedBh5KqZSHBpkMZl5TAeNLyxb/exec";
-String TEST_LOGGER_URL_PATH = "/a/abva.org/macros/s/AKfycbzemWeh-tI5kByedBh5KqZSHBpkMZl5TAeNLyxb/exec";
+String PRODUCTION_LOGGER_URL_PATH = "/macros/s/AKfycbzES5nvAQr244qhdl9lsoeqgdMYstwQBVrLhzZIXb8aTt53lUU/exec";
+String TEST_LOGGER_URL_PATH = "/macros/s/AKfycbzES5nvAQr244qhdl9lsoeqgdMYstwQBVrLhzZIXb8aTt53lUU/exec";
