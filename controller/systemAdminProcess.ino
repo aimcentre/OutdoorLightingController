@@ -85,7 +85,7 @@ void systemAdminProcess(void * parameter) {
       {
         WiFiClientSecure client;
         const int httpPort = 443;
-        if (!client.connect(spreadsheetHost, httpPort)) 
+        if (!client.connect(LOGGER_URL_HOST, httpPort)) 
         {
           Serial.println("Connection failed");
           return;
@@ -104,11 +104,11 @@ void systemAdminProcess(void * parameter) {
         gReport.Reset();
         portEXIT_CRITICAL(&resourceLock);
 
-        String dataEncodedUrl = url + params;
+        String dataEncodedUrl = LOGGER_URL_PATH + params;
           //Serial.println(dataEncodedUrl);
           Serial.println(params);
           client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
-             "Host: " + spreadsheetHost + "\r\n" + 
+             "Host: " + LOGGER_URL_HOST + "\r\n" + 
              "Connection: close\r\n\r\n");
 
           //Serial.println(dataEncodedUrl);
