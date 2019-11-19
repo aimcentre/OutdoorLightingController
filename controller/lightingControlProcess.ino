@@ -59,8 +59,9 @@ void IRAM_ATTR onMotionD()
   // Turnning on the lamp segment C immediately for the default duration
   gSegmentC.Trigger(0, settings.regularLampOnTime);
 
-  // Turnning on the lamp segment D immediately for the auxiliary interval
-  gSegmentD.Trigger(0, settings.auxiliaryLampOnTime);
+  // Turnning on the lamp segment B and D after halfo the inter-segent delay for the auxiliary interval
+  gSegmentB.Trigger(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
+  gSegmentD.Trigger(settings.interSegmentDelay/2, settings.auxiliaryLampOnTime);
   
   portEXIT_CRITICAL(&resourceLock);
 }

@@ -39,7 +39,7 @@ void loadConfigSettings(configSettings_t& settings)
     settings.auxiliaryLampOnTime = AUX_LAMP_ON_TIME;
     settings.interSegmentDelay = INTER_SEG_DELAY;
     settings.darknessThresholdHigh = DARKNESS_THRESHOLD;
-    settings.darknessThresholdLow = DARKNESS_THRESHOLD - 50;
+    settings.darknessThresholdLow = DARKNESS_THRESHOLD - 100;
     settings.scheduleCheckInterval = SCHEDULE_CHECK_INTERVAL_SEC;
     settings.reportingInterval = REPORTING_INTERVAL_SEC;
     

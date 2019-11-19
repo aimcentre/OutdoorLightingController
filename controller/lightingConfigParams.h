@@ -30,9 +30,6 @@ volatile bool testMode = false;
 
 volatile int darknessLevel = 0;
 
-const char* spreadsheetHost = "script.google.com";
-String url = "/macros/s/AKfycbzM92oEPPacHXdE_Aq_YEhMkFd3q18OkqaEyAQXNZSxR0JYIJUz/exec";
-
 
 #endif
  

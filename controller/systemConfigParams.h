@@ -4,7 +4,7 @@
 //    If you change anything in this file, please make sure to change the value of the following CONFIG_VERSION constant to
 //    something other than what is already stored for it in the ESP32 board. Otherwise, the changes will not be saved on the board.
 //    To find what CONFIG_VERSION is in the board, please reset the board while monitoring its serial debugger output.
-#define CONFIG_VERSION 1
+#define CONFIG_VERSION 2
 
 // Maximum lengths of string values used for the fields of the configSettings_t structure. These maximum lenghts
 // include the space for the null termination characters, meaning that the actual readable length of the string will
@@ -60,10 +60,10 @@ configSettings_t settings;
 #define DEBUG_DISPLAY_CUSTOM_PASSWORDS false
 
 // Default lighting parameters. All time periods are in seconds
-#define REG_LAMP_ON_TIME 480
-#define AUX_LAMP_ON_TIME 90
+#define REG_LAMP_ON_TIME 180
+#define AUX_LAMP_ON_TIME 45
 #define INTER_SEG_DELAY 10
-#define DARKNESS_THRESHOLD 800
+#define DARKNESS_THRESHOLD 2200
 
 // Test-mode lighting parameters. All time periods are in seconds
 #define TEST_REG_LAMP_ON_TIME 10

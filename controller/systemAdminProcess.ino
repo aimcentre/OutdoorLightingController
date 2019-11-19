@@ -118,72 +118,11 @@ void systemAdminProcess(void * parameter) {
           lastReportTimestampInSeconds = currentTimestampInSeconds;
       }
 
-      /*
-      if(numReportEntries > 0)
+      if(FetchScheduleFlag)
       {
-          WiFiClientSecure client;
-          const int httpPort = 443;
-          if (!client.connect(spreadsheetHost, httpPort)) 
-          {
-            Serial.println("Connection failed");
-            return;
-          }
-
-          float temperature = getTemperature();
-
-          //Serial.printf("Processing %d report entries \r\n", numReportEntries);
-          
-          String params = String("?t=") + temperature + "&d=" + ambientDarkness;
-
-          if(PRODUCTION_MODE)
-            params = params + "&mode=prod";
-          else
-            params = params + "&mode=test";
-                            
-          for(int i=0; i<numReportEntries; ++i)
-          {
-            switch(actions[i])
-            {
-              case Report::eAction::MSA_TRIGGER: params = params + "&mA=" + timestamps[i]; break;
-              case Report::eAction::MSB_TRIGGER: params = params + "&mB=" + timestamps[i]; break;
-              case Report::eAction::MSC_TRIGGER: params = params + "&mC=" + timestamps[i]; break;
-              case Report::eAction::MSD_TRIGGER: params = params + "&mD=" + timestamps[i]; break;
-              case Report::eAction::MSE_TRIGGER: params = params + "&mE=" + timestamps[i]; break;
-              case Report::eAction::MSF_TRIGGER: params = params + "&mF=" + timestamps[i]; break;
-              case Report::eAction::MSG_TRIGGER: params = params + "&mG=" + timestamps[i]; break;
-
-              case Report::eAction::L1_ON:  params = params + "&s1=1&s1clk=" + timestamps[i]; break;
-              case Report::eAction::L2_ON:  params = params + "&s2=1&s2clk=" + timestamps[i]; break;
-              case Report::eAction::L3_ON:  params = params + "&s3=1&s3clk=" + timestamps[i]; break;
-              case Report::eAction::L4_ON:  params = params + "&s4=1&s4clk=" + timestamps[i]; break;
-              case Report::eAction::L5_ON:  params = params + "&s5=1&s5clk=" + timestamps[i]; break;
-              case Report::eAction::L1_OFF: params = params + "&s1=0&s1clk=" + timestamps[i]; break;
-              case Report::eAction::L2_OFF: params = params + "&s2=0&s2clk=" + timestamps[i]; break;
-              case Report::eAction::L3_OFF: params = params + "&s3=0&s3clk=" + timestamps[i]; break;
-              case Report::eAction::L4_OFF: params = params + "&s4=0&s4clk=" + timestamps[i]; break;
-              case Report::eAction::L5_OFF: params = params + "&s5=0&s5clk=" + timestamps[i]; break;
-
-              case Report::eAction::PING: break; //No motion to be reported; simply send the temperature and the ambient darkness, which are already among the parameters.
-                
-            }
-          }
-
-          String dataEncodedUrl = url + params;
-          //Serial.println(dataEncodedUrl);
-          Serial.println(params);
-          client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
-             "Host: " + spreadsheetHost + "\r\n" + 
-             "Connection: close\r\n\r\n");
-
-          client.stop();
+        ReloadSchedule();
+        FetchScheduleFlag = false;        
       }
-*/
-
-        if(FetchScheduleFlag)
-        {
-          ReloadSchedule();
-          FetchScheduleFlag = false;        
-        }
        
    }
    
