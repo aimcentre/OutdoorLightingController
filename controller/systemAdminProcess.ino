@@ -17,6 +17,7 @@ void systemAdminProcess(void * parameter) {
 
   FetchScheduleFlag = true;
   unsigned long lastReportTimestampInSeconds = 0;
+  String loggerUrlPath = PRODUCTION_MODE ? PRODUCTION_LOGGER_URL_PATH : TEST_LOGGER_URL_PATH;
   for(;;) 
   {
 
@@ -104,7 +105,7 @@ void systemAdminProcess(void * parameter) {
         gReport.Reset();
         portEXIT_CRITICAL(&resourceLock);
 
-        String dataEncodedUrl = LOGGER_URL_PATH + params;
+        String dataEncodedUrl = loggerUrlPath + params;
           //Serial.println(dataEncodedUrl);
           Serial.println(params);
           client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
