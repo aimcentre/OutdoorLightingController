@@ -25,8 +25,19 @@ void setup()
   // Loading configration settings from EEPROM
   loadConfigSettings(settings);
 
+  // Turning on WiFi on both Access Point and Station modes.
+  freshlyRebooted = true;
+  WiFi.mode(WIFI_MODE_APSTA);
+  delay(2000);
+  Serial.print("Setting up Access Point …");
+  WiFi.softAP(settings.accessPointSsid, settings.accessPointPassword);
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+  
+  
   // Initializing WiFi network credentials
-  WiFi.begin(settings.wifiSsid, settings.wifiPassword);
+  //WiFi.begin(settings.wifiSsid, settings.wifiPassword);
 
   // Initializing the Access Point Hotspot and the system-configuration server
   initConfigServer();

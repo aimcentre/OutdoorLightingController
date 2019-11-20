@@ -8,9 +8,14 @@
 void systemMonitorProcess(void * parameter) {
   for(;;) {
 
-    if(WiFi.status() != WL_CONNECTED || wifiInitialized == false)
+    Serial.printf("WiFi Status: %d\r\n", wifiStatus);
+
+    if(wifiStatus == eWifiStatus::CONNECTION_ACTIVE)
     {
-      Serial.println("Connecting to WiFi..");
+      flash(R_LED | G_LED | B_LED, 50, 250, 8);
+    }
+    else if(wifiStatus == CONNECTION_INPROGRESS)
+    {
       flash(R_LED, 50, 250, 8);
     }
     else
@@ -20,19 +25,24 @@ void systemMonitorProcess(void * parameter) {
   
       if(gSunlightSensor.IsNight())
       {
-        solid(B_LED, 500);
+        solid(B_LED, 2000);
         //Serial.printf("Ambient level: %d Threshold: %d Color: Blue\r\n", darknessLevel, settings.dayLightThreshold);
       }
       else
       {
-        solid(G_LED, 500);
+        solid(G_LED, 2000);
         //Serial.printf("Ambient darkness: %d Threshold: %d Color: Green\r\n", darknessLevel, settings.dayLightThreshold);
+      }
+
+      if(wifiStatus == CONNECTION_FAILED)
+      {
+        solid(R_LED, 250);
       }
     }
 
     if(accessPointPasswordResetComplete)
     {
-      solid(R_LED | B_LED, 4000);
+      solid(R_LED | G_LED | B_LED, 4000);
       accessPointPasswordResetComplete = false;
     }
 

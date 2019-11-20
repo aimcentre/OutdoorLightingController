@@ -1,14 +1,6 @@
 
 void initConfigServer()
 {
-  // Setting up access point
-  Serial.print("Setting up Access Point …");
-  WiFi.softAP(settings.accessPointSsid, settings.accessPointPassword);
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
-
-
   // Registering routes for the web server
   server.on("/", HTTP_GET, handleRoot);
 
