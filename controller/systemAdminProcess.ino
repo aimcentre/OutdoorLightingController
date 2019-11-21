@@ -22,7 +22,8 @@ void systemAdminProcess(void * parameter) {
   for(;;) 
   {
 
-    Serial.println("Admin process looping ...");
+    Serial.print("Admin process looping ... ");
+    Serial.printf("Wifi Mode: %s    WiFi Status: %s\r\n", getWifiModeStr(WiFi.getMode()), getWifiStatusStr(wifiStatus));
 
     // Checking if Access Point password-reset button is kept pressed (in which case it retrnse false) false for10 second
     unsigned long t = millis();
@@ -190,24 +191,67 @@ bool WifiConnect()
 
 void WifiDisconnect()
 {
-  if(freshlyRebooted && millis()/60000 < HOTSPOT_ACTIVE_INTERVAL_MINUTES)
+  WifiDisconnect(false);
+}
+
+void WifiDisconnect(bool force)
+{
+  if(force == false && freshlyRebooted && millis()/60000 < HOTSPOT_ACTIVE_PERIOD_MINUTES)
   {
     //This is a freshly booted cycle, so we should not disconnect wifi right away.
   }
   else
   {
     freshlyRebooted = false;
-    while(WiFi.status() == WL_CONNECTED)
+    if(WiFi.status() == WL_CONNECTED)
     {
+      // Indicates that the wifi connection being closed is a successful connection.
       wifiStatus = eWifiStatus::SUCCESS;
+    }
+
+    while(WiFi.getMode() != WIFI_OFF)
+    {
       Serial.println("Disconnecting wifi");
       WiFi.disconnect(true);
       WiFi.mode(WIFI_OFF);
       delay(500);
     }
+
+    //Serial.println("Disconnecting wifi again ...");
+    //WiFi.disconnect(true);
+    //WiFi.mode(WIFI_OFF);
+    //delay(500);
   }
 }
 
+const char* getWifiStatusStr(int statusCode)
+{
+  switch(statusCode)
+  {
+    case WL_CONNECTED: return "WL_CONNECTED";
+    case WL_NO_SHIELD: return "WL_NO_SHIELD";
+    case WL_IDLE_STATUS: return "WL_IDLE_STATUS";
+    case WL_NO_SSID_AVAIL: return "WL_NO_SSID_AVAIL";
+    case WL_SCAN_COMPLETED: return "WL_SCAN_COMPLETED";
+    case WL_CONNECT_FAILED: return "WL_CONNECT_FAILED";
+    case WL_CONNECTION_LOST: return "WL_CONNECTION_LOST";
+    case WL_DISCONNECTED: return "WL_DISCONNECTED";
+    default: return "Unknown";
+  }
+}
+
+const char* getWifiModeStr(int modeCode)
+{
+  switch(modeCode)
+  {
+    case WIFI_OFF: return "WIFI_OFF";
+    case WIFI_MODE_STA: return "WIFI_MODE_STA";
+    case WIFI_MODE_AP: return "WIFI_MODE_AP";
+    case WIFI_MODE_APSTA: return "WIFI_MODE_APSTA";
+    case WIFI_MODE_MAX: return "WIFI_MODE_MAX";
+    default: return "Unknown";
+  }
+}
 unsigned long millisFrom(unsigned long referenceMillis)
 {
   unsigned current = millis();    

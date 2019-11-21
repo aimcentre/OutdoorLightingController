@@ -173,19 +173,23 @@ void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, b
 
   showSettings(settings);
 
-  if(credentialsChanged && restartWifiIfCredentialsChanged)
-  {
-    while(WiFi.status() == WL_CONNECTED)
-    {
-      WiFi.disconnect(true);
-      delay(500);
-    }
-    
-    WiFi.begin(ssid, ssidpw);
-    Serial.println("Re-initialized WiFi SSID and Password");
-    delay(500);
-    
-  }
+//  if(credentialsChanged && restartWifiIfCredentialsChanged)
+//  {
+////    WifiDisconnect(true);
+////    delay(500);
+////    WifiConnect(true, true);
+
+//    while(WiFi.status() == WL_CONNECTED)
+//    {
+//      WiFi.disconnect(true);
+//      delay(500);
+//    }
+//    
+//    WiFi.begin(ssid, ssidpw);
+//    Serial.println("Re-initialized WiFi SSID and Password");
+//    delay(500);
+//    
+//  }
 
   if(credentialsChanged && restartAccessPointIfCredentialsChanged)
   {
@@ -199,6 +203,7 @@ void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, b
   request->send(200, "text/html", 
     htmlPageHead() +
     "<h2>Settings saved!</h2>" + 
+    (credentialsChanged ? "<p>Credentials changed. Please RESTART the lighting controller to take the new credentials into effect.</p>" : "" ) +
     htmlPageTail(true)
   );
 }

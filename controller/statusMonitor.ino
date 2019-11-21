@@ -8,7 +8,8 @@
 void systemMonitorProcess(void * parameter) {
   for(;;) {
 
-    Serial.printf("WiFi Status: %d\r\n", wifiStatus);
+    //Serial.printf("Wifi Mode: %d    WiFi Status: %d\r\n", WiFi.getMode(), wifiStatus);
+    
 
     if(wifiStatus == eWifiStatus::CONNECTION_ACTIVE)
     {
@@ -36,7 +37,7 @@ void systemMonitorProcess(void * parameter) {
 
       if(wifiStatus == CONNECTION_FAILED)
       {
-        solid(R_LED, 250);
+        solid(R_LED, 100);
       }
     }
 
