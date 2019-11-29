@@ -1,6 +1,8 @@
 #ifndef _REPORT_H
 #define _REPORT_H
 
+#include "AppConfig.h"
+
 #define ACTION_HISTORY_LENGTH 10
 #define SEPARATOR "_"
 
@@ -9,10 +11,12 @@ class ActionHistory
   public:
   volatile int Count;
   volatile unsigned long Timestamps[ACTION_HISTORY_LENGTH];
+  volatile unsigned long LastOccuranceTimestamp;
 
   ActionHistory()
   {
     Reset();
+    LastOccuranceTimestamp = 0;
   }
 
   void Reset() volatile
@@ -22,10 +26,18 @@ class ActionHistory
 
   void LogOccurance() volatile
   {
-    //Serial.println("Logging: ");
-    if(Count < ACTION_HISTORY_LENGTH)
-      Timestamps[Count] = millis();
-    ++Count;
+    unsigned int now = millis();
+    unsigned int duration = (LastOccuranceTimestamp < now) ? (LastOccuranceTimestamp - now) : (ULONG_MAX - LastOccuranceTimestamp + now);
+    if(duration > ACTION_JITTER_PERIOD_MILLISEC)
+    {
+      ++Count;
+      
+      //Serial.println("Logging: ");
+      if(Count < ACTION_HISTORY_LENGTH)
+        Timestamps[Count] = now;
+        
+      LastOccuranceTimestamp = now;
+    }
   }
 
   String Export() volatile

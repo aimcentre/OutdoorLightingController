@@ -26,6 +26,7 @@
 #define MOTION_E DIN_5
 #define MOTION_F DIN_6
 #define MOTION_G DIN_7
+#define MOTION_H DIN_8
 
 #define WIFI_RESET 13
 #define DAYLIGHT_SENSOR AIN_1
