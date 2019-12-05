@@ -54,7 +54,7 @@ void loadConfigSettings(configSettings_t& settings)
     strncpy(settings.scheduleApiHost, SCHEDULE_RETREIAVER_HOST, HOST_NAME_MAX_LENGTH-1); 
     settings.scheduleApiHost[HOST_NAME_MAX_LENGTH-1] = '\0';
 
-    strncpy(settings.scheduleApiPath, SCHEDULE_RETRIEVER_URL, URL_MAX_LENGTH-1); 
+    strncpy(settings.scheduleApiPath, SCHEDULE_RETRIEVER_PRODUCTION_URL, URL_MAX_LENGTH-1); 
     settings.scheduleApiPath[URL_MAX_LENGTH-1] = '\0';
 
     //Saving the updated configuration structure in the EEPROM.

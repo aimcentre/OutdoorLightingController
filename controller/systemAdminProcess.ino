@@ -3,6 +3,13 @@
 #include <ArduinoJson.h>
 #include "AppConfig.h"
 
+#define SEG_MASK_1 1
+#define SEG_MASK_2 2
+#define SEG_MASK_3 4
+#define SEG_MASK_4 8
+#define SEG_MASK_5 16
+
+
 char *WifiSSID = NULL, *WifiPassword = NULL;
 
 volatile bool FetchScheduleFlag = false;
@@ -258,13 +265,65 @@ unsigned long millisFrom(unsigned long referenceMillis)
   unsigned long dt = (current > referenceMillis) ? (current - referenceMillis) : (ULONG_MAX - referenceMillis + current);
   return dt;
 }
-
+ 
 void ReloadSchedule()
 {
   Serial.println("Fetching schedule ...");
-  String schedule = fetchSchedule(SCHEDULE_RETREIAVER_HOST, 443, SCHEDULE_RETRIEVER_URL);
-  Serial.println(schedule);
+  const char* scheduleRetrieverApi = PRODUCTION_MODE ? settings.scheduleApiPath : SCHEDULE_RETRIEVER_TEST_URL;
+
+  unsigned short segments[MAX_SHCEDULED_ITEMS];
+  unsigned long offsets[MAX_SHCEDULED_ITEMS];
+  unsigned long periods[MAX_SHCEDULED_ITEMS];
   
+  int numItemsLoaded = fetchSchedule(SCHEDULE_RETREIAVER_HOST, 443, scheduleRetrieverApi, segments, offsets, periods, MAX_SHCEDULED_ITEMS);
+  Serial.printf("Num schedules loaded: %d\r\n", numItemsLoaded);
+
+  if(numItemsLoaded > 0)
+  {
+    String message = "";
+    
+    portENTER_CRITICAL(&resourceLock);
+    
+    gSegmentA.ResetSchedule();
+    gSegmentB.ResetSchedule();
+    gSegmentC.ResetSchedule();
+    gSegmentD.ResetSchedule();
+    gSegmentE.ResetSchedule();
+    
+    for(int i=0; i<numItemsLoaded; ++i)
+    {      
+      if((segments[i] & SEG_MASK_1) > 0){
+        message = message + "\r\nSegment A: " + gSegmentA.ScheduleCycle(offsets[i], periods[i]);
+      }
+      
+      if((segments[i] & SEG_MASK_2) > 0){
+        message = message + "\r\nSegment B: " + gSegmentB.ScheduleCycle(offsets[i], periods[i]);
+      }
+
+      if((segments[i] & SEG_MASK_3) > 0){
+        message = message + "\r\nSegment C: " + gSegmentC.ScheduleCycle(offsets[i], periods[i]);
+      }
+
+      if((segments[i] & SEG_MASK_4) > 0){
+        message = message + "\r\nSegment D: " + gSegmentD.ScheduleCycle(offsets[i], periods[i]);
+      }
+
+      if((segments[i] & SEG_MASK_5) > 0){
+        message = message + "\r\nSegment E: " + gSegmentE.ScheduleCycle(offsets[i], periods[i]);
+      }          
+    }
+
+    portEXIT_CRITICAL(&resourceLock);
+
+    if(message.length() > 0)
+    {
+      Serial.println(message);
+    }
+  }
+
+/*   
+  return;
+ 
   if(schedule.length() > 0)
   {
     //NOTE: Use Arduino Json Assitant to Calculate Document Size
@@ -330,16 +389,19 @@ void ReloadSchedule()
       }
     }
   }
+  */
 }
 
-String fetchSchedule(const char* host, int port, const char* url)
+int fetchSchedule(const char* host, int port, const char* url, unsigned short* segmentsBuffer, unsigned long* offsetsBuffer, unsigned long* periodsBuffer, int maxBufferLength)
 {
   WiFiClientSecure client;
   if (!client.connect(host, port)) 
   {
     Serial.println("Connection failed");
-    return "";
+    return 0;
   }
+
+  Serial.printf("%s%s\r\n", host, url);
   
   client.print(String("GET ") + url +" HTTP/1.1\r\n" +
      "Host: " + host + "\r\n" + 
@@ -389,24 +451,71 @@ String fetchSchedule(const char* host, int port, const char* url)
     //Serial.println(redirectUrl);
 
     client.stop();
-   
-    return fetchSchedule(host2.c_str(), 443, url2.c_str());
+    return fetchSchedule(host2.c_str(), 443, url2.c_str(), segmentsBuffer, offsetsBuffer, periodsBuffer, maxBufferLength);
   }
   else
   {
+    //No more redirections. Refreshing all segments
     String result = "";
+    char buff[16];
+    Serial.println("Start reading lines ... ");
+    int itr = 0;
+    while (client.available() && itr < maxBufferLength)
+    {
+      String line = client.readStringUntil('\n');
+      line.trim();
+
+      int idx1 = line.indexOf(":");
+      String segments = line.substring(0, idx1);
+      segments.toUpperCase();
+      
+      int idx2 = line.indexOf("|");  
+      String offsetStr = line.substring(idx1 + 1, idx2);
+      offsetStr.toCharArray(buff, 16);
+      unsigned int offset = atoi(buff);
+
+      String periodStr = line.substring(idx2 + 1);
+      periodStr.toCharArray(buff, 16);
+      unsigned int period = atoi(buff);
+
+      Serial.printf("%s: [%d, %d]\r\n", segments, offset, offset);
+
+      segmentsBuffer[itr] = 0;
+      if(segments.indexOf("S1") >=0)
+        segmentsBuffer[itr] |= SEG_MASK_1;
+      if(segments.indexOf("S2") >=0)
+        segmentsBuffer[itr] |= SEG_MASK_2;
+      if(segments.indexOf("S3") >=0)
+        segmentsBuffer[itr] |= SEG_MASK_3;
+      if(segments.indexOf("S4") >=0)
+        segmentsBuffer[itr] |= SEG_MASK_4;
+      if(segments.indexOf("S5") >=0)
+        segmentsBuffer[itr] |= SEG_MASK_5;
+      
+      offsetsBuffer[itr] = offset;
+      periodsBuffer[itr] = period;
+
+      //Serial.printf("segment: %d\r\n", segmentsBuffer[itr]);
+           
+     ++itr;      
+    }
+    Serial.println("Done reading lines ... ");
+/*   
     while (client.available())
     {
       String line = client.readStringUntil('\n');
       line.trim();
+      //Serial.println(line);
       if(result.length() == 0)
         result = line;
       else
         result = result + "," + line;
     }
-
+    
+*/
     client.stop();
-    return result;
+    
+    return itr;
   }
 }
 
