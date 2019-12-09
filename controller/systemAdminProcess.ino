@@ -1,6 +1,8 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <time.h>
+
 #include "AppConfig.h"
 
 #define SEG_MASK_1 1
@@ -14,6 +16,8 @@ char *WifiSSID = NULL, *WifiPassword = NULL;
 
 volatile bool FetchScheduleFlag = false;
 
+time_t LastClockSyncedTime;
+
 void systemAdminProcess(void * parameter) {
 
   // Initializing the lamp-schedule timer
@@ -21,6 +25,7 @@ void systemAdminProcess(void * parameter) {
   timerAttachInterrupt(lampScheduleTimer, &fetchScheduleISR, true);
   timerAlarmWrite(lampScheduleTimer, settings.scheduleCheckInterval * 1000000, true);
   timerAlarmEnable(lampScheduleTimer);
+  LastClockSyncedTime = 0;
 
   FetchScheduleFlag = true;
   unsigned long lastReportTimestampInSeconds = 0;
@@ -60,17 +65,18 @@ void systemAdminProcess(void * parameter) {
       accessPointPasswordResetBtnPressedTime = 0;
     }
 
-
-//
-//    if(WiFi.status() != WL_CONNECTED)
-//      wifiInitialized = false;
-//    else if(!wifiInitialized)
-//    {
-//      Serial.print("Local IP: ");
-//      Serial.println(WiFi.localIP());
-//      wifiInitialized = true;
-//    }
-//
+    if((year() == 1970) //clock was never synchronized
+       || (now() - LastClockSyncedTime) > (CLOCK_SYNC_CYCLE_HOURS * 3600) //clcok synchronization cycle elapsed
+       )
+    {
+      if(WifiConnect())
+      {
+       if(SyncClock()){
+        LastClockSyncedTime = now();
+       }
+      }
+      
+    }
 
     unsigned long currentTimestampInSeconds = millis() / 1000;
     bool clockRecycled = currentTimestampInSeconds < lastReportTimestampInSeconds;
@@ -223,11 +229,6 @@ void WifiDisconnect(bool force)
       WiFi.mode(WIFI_OFF);
       delay(500);
     }
-
-    //Serial.println("Disconnecting wifi again ...");
-    //WiFi.disconnect(true);
-    //WiFi.mode(WIFI_OFF);
-    //delay(500);
   }
 }
 
@@ -259,6 +260,70 @@ const char* getWifiModeStr(int modeCode)
     default: return "Unknown";
   }
 }
+
+bool SyncClock()
+{
+  if(WiFi.status() == WL_CONNECTED)
+  {
+    bool success = false;
+    WiFiClientSecure client;
+    if (!client.connect(TIME_SERVER_HOST, 443)) 
+    {
+      Serial.println("SyncClock(): Connection to TIME_SERVER_HOST failed");
+      return false;
+    }
+
+    Serial.println("Synchronizing clock ... ");
+    
+    client.print(String("GET ") + TIME_SERVER_API +" HTTP/1.1\r\n" +
+      "Host: " + TIME_SERVER_HOST + "\r\n" + 
+      "Connection: close\r\n\r\n");
+     
+    while (client.connected()) 
+    {
+      //Reading the header
+      String line;
+      do
+      {
+        line = client.readStringUntil('\n');
+        line.trim();
+      }
+      while(line.length() > 0);
+      
+      String timeData = client.readString();      
+      timeData.trim();
+      
+      
+      //NOTE: Use Arduino Json Assitant to Calculate Document Size
+      //      https://arduinojson.org/v5/assistant/
+      StaticJsonDocument<TIME_SERVER_RESPONSE_JSON_BUFFER_SIZE> doc;
+      DeserializationError error = deserializeJson(doc, timeData);
+      if (error) 
+      {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.c_str());
+      }
+      else
+      {
+        JsonObject obj = doc.as<JsonObject>();
+        time_t unixtime = obj["unixtime"];
+        unixtime += (int) obj["raw_offset"];
+        setTime(unixtime);        
+        Serial.print("Time Data: "); Serial.println(timeData);
+        Serial.printf("Date Time after sync: %d-%02d-%02d %02d:%02d:%02d\r\n", year(), month(), day(), hour(), minute(), second());
+        success = true;
+      }
+    }
+    client.stop();
+    return success;
+  }
+  else
+  {
+    Serial.println("SyncClock(): faild -- WiFi is not connected.");
+    return false; 
+  }
+}
+
 unsigned long millisFrom(unsigned long referenceMillis)
 {
   unsigned current = millis();    
@@ -401,7 +466,7 @@ int fetchSchedule(const char* host, int port, const char* url, unsigned short* s
     return 0;
   }
 
-  Serial.printf("%s%s\r\n", host, url);
+  //Serial.printf("%s%s\r\n", host, url);
   
   client.print(String("GET ") + url +" HTTP/1.1\r\n" +
      "Host: " + host + "\r\n" + 
@@ -500,19 +565,7 @@ int fetchSchedule(const char* host, int port, const char* url, unsigned short* s
      ++itr;      
     }
     Serial.println("Done reading lines ... ");
-/*   
-    while (client.available())
-    {
-      String line = client.readStringUntil('\n');
-      line.trim();
-      //Serial.println(line);
-      if(result.length() == 0)
-        result = line;
-      else
-        result = result + "," + line;
-    }
-    
-*/
+
     client.stop();
     
     return itr;

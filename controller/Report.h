@@ -4,6 +4,7 @@
 #include "AppConfig.h"
 
 #define ACTION_HISTORY_LENGTH 10
+#define ACTION_HISTORY_BUFFER_SIZE 1000
 #define SEPARATOR "_"
 
 class ActionHistory
@@ -70,6 +71,7 @@ class Report
 
   private:
   volatile ActionHistory ActionHistories[NUM_TOKENS];
+  volatile unsigned short Actions[ACTION_HISTORY_BUFFER_SIZE];
 
   public:
   static Report Instance;

@@ -5,10 +5,16 @@
 #define G_LED 2
 #define B_LED 4
 
+#include <time.h>
+
 void systemMonitorProcess(void * parameter) {
   for(;;) {
 
     //Serial.printf("Wifi Mode: %d    WiFi Status: %d\r\n", WiFi.getMode(), wifiStatus);
+    //setTime(1575831028);
+    //setTime(11, 52, 12, 8, 12, 2019);
+    //int y = year;
+    //Serial.printf("%4d-%2d-%2D  %2d:%2d:%2d\r\n", year(), month(), day(), hour(), minute(), second());
     
 
     if(wifiStatus == eWifiStatus::CONNECTION_ACTIVE)
