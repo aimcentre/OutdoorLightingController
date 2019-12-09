@@ -173,24 +173,6 @@ void handleSsidPost(AsyncWebServerRequest * request, char* ssid, char* ssidpw, b
 
   showSettings(settings);
 
-//  if(credentialsChanged && restartWifiIfCredentialsChanged)
-//  {
-////    WifiDisconnect(true);
-////    delay(500);
-////    WifiConnect(true, true);
-
-//    while(WiFi.status() == WL_CONNECTED)
-//    {
-//      WiFi.disconnect(true);
-//      delay(500);
-//    }
-//    
-//    WiFi.begin(ssid, ssidpw);
-//    Serial.println("Re-initialized WiFi SSID and Password");
-//    delay(500);
-//    
-//  }
-
   if(credentialsChanged && restartAccessPointIfCredentialsChanged)
   {
     Serial.print("Resetting up Access Point …");

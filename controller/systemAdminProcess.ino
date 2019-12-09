@@ -16,7 +16,9 @@ char *WifiSSID = NULL, *WifiPassword = NULL;
 
 volatile bool FetchScheduleFlag = false;
 
-time_t LastClockSyncedTime;
+time_t LastSyncSuccessTime;
+time_t LastSyncAttemptTime;
+int FailedWifiConnectionAttemptCount;
 
 void systemAdminProcess(void * parameter) {
 
@@ -25,24 +27,20 @@ void systemAdminProcess(void * parameter) {
   timerAttachInterrupt(lampScheduleTimer, &fetchScheduleISR, true);
   timerAlarmWrite(lampScheduleTimer, settings.scheduleCheckInterval * 1000000, true);
   timerAlarmEnable(lampScheduleTimer);
-  LastClockSyncedTime = 0;
+  LastSyncSuccessTime = 0;
+  LastSyncAttemptTime = 0;
+  FailedWifiConnectionAttemptCount = 0;
 
   FetchScheduleFlag = true;
   unsigned long lastReportTimestampInSeconds = 0;
-  String loggerUrlPath = PRODUCTION_MODE ? PRODUCTION_LOGGER_URL_PATH : TEST_LOGGER_URL_PATH;
   
   for(;;) 
   {
-
-    Serial.print("Admin process looping ... ");
+    PrintTime();
+    Serial.print(" Admin process looping ... ");
     Serial.printf("Wifi Mode: %s    WiFi Status: %s\r\n", getWifiModeStr(WiFi.getMode()), getWifiStatusStr(wifiStatus));
 
-    // Checking if Access Point password-reset button is kept pressed (in which case it retrnse false) false for10 second
-    unsigned long t = millis();
-    while(digitalRead(WIFI_RESET) == false && millis() - t < 10000)
-      delay(100);
-
-    if(millis() - t >= 10000  && digitalRead(WIFI_RESET) == false)
+    if(IsAccessPointPasswordResetRequested())
     {
       Serial.println("Restting access-point password to default value ...");
       
@@ -64,83 +62,115 @@ void systemAdminProcess(void * parameter) {
       accessPointPasswordResetComplete = true;  
       accessPointPasswordResetBtnPressedTime = 0;
     }
+    
+    unsigned long t = millis();
 
-    if((year() == 1970) //clock was never synchronized
-       || (now() - LastClockSyncedTime) > (CLOCK_SYNC_CYCLE_HOURS * 3600) //clcok synchronization cycle elapsed
-       )
+    bool trySync = year() == 1970 //Not yest synchronized after the last reset
+                      || (now() - LastSyncAttemptTime) > (SYNC_INTERVAL_HOURS * 3600) //synchronization attempt cycle elapsed
+                      ;
+
+    //Serial.printf("Elapsed seconds: %d\r\n", now() - LastSyncAttemptTime);
+
+    if(trySync)
     {
       if(WifiConnect())
       {
-       if(SyncClock()){
-        LastClockSyncedTime = now();
-       }
+        bool syncsSucceeded = true;
+        FailedWifiConnectionAttemptCount = 0;
+  
+        syncsSucceeded &= SyncClock();
+  
+        syncsSucceeded &= SendReport();
+  
+        syncsSucceeded &= ReloadSchedule(); 
+
+        if(syncsSucceeded)
+        {
+          LastSyncSuccessTime = now();
+        }
+      }
+      else
+      {
+        FailedWifiConnectionAttemptCount += 1;
       }
       
-    }
-
-    unsigned long currentTimestampInSeconds = millis() / 1000;
-    bool clockRecycled = currentTimestampInSeconds < lastReportTimestampInSeconds;
-    bool aggregationPeriodElapsed = (currentTimestampInSeconds - lastReportTimestampInSeconds) >= settings.reportingInterval;
-    
-    int ambientDarkness = 0;
-    portENTER_CRITICAL(&resourceLock);
-    ambientDarkness = darknessLevel;
-    bool hasActivities = gReport.HasActivities();
-    portEXIT_CRITICAL(&resourceLock);
-    
-    if(hasActivities && (clockRecycled || aggregationPeriodElapsed))
-    {
-      if(WifiConnect())
-      {
-        //Serial.println("WifiConnect returned true");
-        WiFiClientSecure client;
-        const int httpPort = 443;
-        if (!client.connect(LOGGER_URL_HOST, httpPort)) 
-        {
-          Serial.println("Logger connection failed");
-        }
-        else
-        {
-          float temperature = getTemperature();
-          String params = String("?t=") + temperature + "&d=" + ambientDarkness;
-
-          if(PRODUCTION_MODE)
-            params = params + "&mode=prod";
-          else
-            params = params + "&mode=test&";
-  
-          portENTER_CRITICAL(&resourceLock);
-          params = params + gReport.Export();
-          gReport.Reset();
-          portEXIT_CRITICAL(&resourceLock);
-  
-          String dataEncodedUrl = loggerUrlPath + params;
-          //Serial.println(dataEncodedUrl);
-          Serial.println(params);
-          client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
-             "Host: " + LOGGER_URL_HOST + "\r\n" + 
-             "Connection: close\r\n\r\n");
-
-          Serial.println(dataEncodedUrl);
-
-          client.stop();
-
-          lastReportTimestampInSeconds = currentTimestampInSeconds;
-        }
-      }         
-    }
-
-    if(FetchScheduleFlag && WifiConnect())
-    {
-      ReloadSchedule();
-      FetchScheduleFlag = false;  
-    }
+      LastSyncAttemptTime = now();
+    }    
 
     WifiDisconnect();
    
     delay(5000);
-
   }
+}
+
+bool SendReport()
+{
+  int ambientDarkness = 0;
+  bool hasActivities = false;
+  
+  portENTER_CRITICAL(&resourceLock);
+  ambientDarkness = darknessLevel;
+  hasActivities = gReport.HasActivities();
+  portEXIT_CRITICAL(&resourceLock);
+
+  if(hasActivities == false)
+    return true; //No need to send a report, so this is not a failure.
+
+  if(WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("No wifi connection available");
+    return false; //Cannot send the report without having a wifi connection
+  }
+
+  WiFiClientSecure client;
+  if (!client.connect(LOGGER_URL_HOST, 443)) 
+  {
+    Serial.println("Report webservice connection failed");
+    return false;
+  }
+
+  float temperature = getTemperature();
+  String params = String("?t=") + temperature + "&d=" + ambientDarkness;
+
+  if(PRODUCTION_MODE)
+    params = params + "&mode=prod";
+  else
+    params = params + "&mode=test&";
+
+  portENTER_CRITICAL(&resourceLock);
+  params = params + gReport.Export();
+  gReport.Reset();
+  portEXIT_CRITICAL(&resourceLock);
+
+  String loggerUrlPath = PRODUCTION_MODE ? PRODUCTION_LOGGER_URL_PATH : TEST_LOGGER_URL_PATH;
+  String dataEncodedUrl = loggerUrlPath + params;
+  //Serial.println(dataEncodedUrl);
+  Serial.println(params);
+  client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
+     "Host: " + LOGGER_URL_HOST + "\r\n" + 
+     "Connection: close\r\n\r\n");
+
+  //Waiting for the webservice to respond
+  String response = "waiting...";
+  while (client.connected() && response.length() == 0)
+  {
+    response = client.readString();
+    response.trim();
+  }
+  
+  client.stop();
+
+  return true;
+}
+
+///Returns true if the Access-Point-Password-Reset button is kept pressed for 10 seconds
+bool IsAccessPointPasswordResetRequested()
+{
+  unsigned long t = millis();
+  while(digitalRead(WIFI_RESET) == false && millis() - t < 10000)
+    delay(100);
+
+  return (millis() - t >= 10000)  && (digitalRead(WIFI_RESET) == false);
 }
 
 bool WifiConnect()
@@ -153,14 +183,14 @@ bool WifiConnect()
   }
   else
   {
-    //make sure we do not connect or re-attempt to connect to wifi unless this is the first attempt
-    //or the time elapsed from the previous connection/connection-reattempt is more than WIFI_REATTEMPT_INTERVAL_MINUTES.
-    unsigned current_time = millis();    
-    unsigned long dt = millisFrom(wifiAttemtTimeStamp) / 60000;
-    if(wifiAttemtTimeStamp > 0 && dt < WIFI_REATTEMPT_INTERVAL_MINUTES)
-    {
-      return false;
-    }
+//    //make sure we do not connect or re-attempt to connect to wifi unless this is the first attempt
+//    //or the time elapsed from the previous connection/connection-reattempt is more than WIFI_REATTEMPT_INTERVAL_MINUTES.
+//    unsigned current_time = millis();    
+//    unsigned long dt = millisFrom(wifiAttemtTimeStamp) / 60000;
+//    if(wifiAttemtTimeStamp > 0 && dt < WIFI_REATTEMPT_INTERVAL_MINUTES)
+//    {
+//      return false;
+//    }
 
     //If sufficient time has elapsed from the previous attemt, connect to wifi.
 
@@ -310,7 +340,6 @@ bool SyncClock()
         unixtime += (int) obj["raw_offset"];
         setTime(unixtime);        
         Serial.print("Time Data: "); Serial.println(timeData);
-        Serial.printf("Date Time after sync: %d-%02d-%02d %02d:%02d:%02d\r\n", year(), month(), day(), hour(), minute(), second());
         success = true;
       }
     }
@@ -324,6 +353,11 @@ bool SyncClock()
   }
 }
 
+void PrintTime()
+{
+  Serial.printf("%d-%02d-%02d %02d:%02d:%02d", year(), month(), day(), hour(), minute(), second());
+}
+
 unsigned long millisFrom(unsigned long referenceMillis)
 {
   unsigned current = millis();    
@@ -331,7 +365,7 @@ unsigned long millisFrom(unsigned long referenceMillis)
   return dt;
 }
  
-void ReloadSchedule()
+bool ReloadSchedule()
 {
   Serial.println("Fetching schedule ...");
   const char* scheduleRetrieverApi = PRODUCTION_MODE ? settings.scheduleApiPath : SCHEDULE_RETRIEVER_TEST_URL;
