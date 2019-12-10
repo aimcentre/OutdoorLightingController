@@ -1,12 +1,14 @@
 #ifndef _REPORT_H
 #define _REPORT_H
 
+#include <time.h>
 #include "AppConfig.h"
 
-#define ACTION_HISTORY_LENGTH 10
+//#define ACTION_HISTORY_LENGTH 10
 #define ACTION_HISTORY_BUFFER_SIZE 1000
 #define SEPARATOR "_"
 
+/*
 class ActionHistory
 {
   public:
@@ -60,6 +62,7 @@ class ActionHistory
     return ret;
   }
 };
+*/
 
 class Report
 {
@@ -70,8 +73,11 @@ class Report
               NUM_TOKENS};
 
   private:
-  volatile ActionHistory ActionHistories[NUM_TOKENS];
-  volatile unsigned short Actions[ACTION_HISTORY_BUFFER_SIZE];
+  //volatile ActionHistory ActionHistories[NUM_TOKENS];
+
+  volatile unsigned int Index;
+  volatile time_t Timestamps[ACTION_HISTORY_BUFFER_SIZE];
+  volatile eAction Actions[ACTION_HISTORY_BUFFER_SIZE];
 
   public:
   static Report Instance;
@@ -81,31 +87,47 @@ class Report
     Reset();
   }
 
-  void AddAction(eAction action) volatile
+  int AddAction(eAction action) volatile
   {
-    ActionHistories[action].LogOccurance();
+//    ActionHistories[action].LogOccurance();
+
+    if(Index < ACTION_HISTORY_BUFFER_SIZE)
+    {
+      Timestamps[Index] = now();
+      Actions[Index] = action;
+      ++Index;
+
+      Serial.printf("%d: %s\r\n", Index, GetActionString(action));
+    }
+    else
+      Serial.printf("SKIP: %s\r\n", GetActionString(action));
+    
+    return Index;
   }
 
   void Reset() volatile
   {
     Serial.println("Resetting report");
-    for(int i=0; i<NUM_TOKENS; ++i)
-      ActionHistories[i].Reset();
+    Index = 0;
+    
+//    for(int i=0; i<NUM_TOKENS; ++i)
+//      ActionHistories[i].Reset();
   }
 
   bool HasActivities() volatile
-  {    
-    for(int i=0; i<NUM_TOKENS; ++i)
-    if(ActionHistories[i].Count > 0)
-      return true;
-
-    return false;
+  {
+    return Index > 0;
+//    for(int i=0; i<NUM_TOKENS; ++i)
+//    if(ActionHistories[i].Count > 0)
+//      return true;
+//
+//    return false;
   }
 
   String Export() volatile
   {
     String ret = "";
-
+/*
     if(ActionHistories[MSA_TRIGGER].Count > 0)
       ret = ret + "&mA=" + ActionHistories[MSA_TRIGGER].Export();
 
@@ -151,8 +173,34 @@ class Report
     
      if(ActionHistories[L4_OFF].Count > 0)
       ret = ret + (ActionHistories[L4_ON].Count > 0 ? SEPARATOR : "&s4=") + "0:" + ActionHistories[L4_OFF].Export();
-  
+  */
     return ret;
+  }
+
+  const char* GetActionString(eAction action) volatile
+  {
+    switch(action)
+    {
+      case NONE: return "NONE"; break;
+      case MSA_TRIGGER: return "MSA_TRIGGER"; break;
+      case MSB_TRIGGER: return "MSB_TRIGGER"; break;
+      case MSC_TRIGGER: return "MSC_TRIGGER"; break;
+      case MSD_TRIGGER: return "MSD_TRIGGER"; break;
+      case MSE_TRIGGER: return "MSE_TRIGGER"; break;
+      case MSF_TRIGGER: return "MSF_TRIGGER"; break;
+      case MSG_TRIGGER: return "MSG_TRIGGER"; break;
+      case L1_ON:  return "L1_ON"; break;
+      case L1_OFF: return "L1_OFF"; break;
+      case L2_ON:  return "L2_ON"; break;
+      case L2_OFF: return "L2_OFF"; break;
+      case L3_ON:  return "L3_ON"; break;
+      case L3_OFF: return "L3_OFF"; break;
+      case L4_ON:  return "L4_ON"; break;
+      case L4_OFF: return "L4_OFF"; break;
+      case L5_ON:  return "L5_ON"; break;
+      case L5_OFF: return "L5_OFF"; break;
+      case PING:   return "PING"; break;
+    }
   }
 };
 

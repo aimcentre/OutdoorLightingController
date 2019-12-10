@@ -36,9 +36,9 @@ void systemAdminProcess(void * parameter) {
   
   for(;;) 
   {
-    PrintTime();
-    Serial.print(" Admin process looping ... ");
-    Serial.printf("Wifi Mode: %s    WiFi Status: %s\r\n", getWifiModeStr(WiFi.getMode()), getWifiStatusStr(wifiStatus));
+    //PrintTime();
+    //Serial.print(" Admin process looping ... ");
+    //Serial.printf("Wifi Mode: %s    WiFi Status: %s\r\n", getWifiModeStr(WiFi.getMode()), getWifiStatusStr(wifiStatus));
 
     if(IsAccessPointPasswordResetRequested())
     {

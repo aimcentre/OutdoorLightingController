@@ -9,8 +9,13 @@ void IRAM_ATTR onTimer()
   xSemaphoreGiveFromISR(timerSemaphore, NULL);
 }
 
+volatile unsigned long TickA = 0;
 void IRAM_ATTR onMotionA()
 {
+  if(abs(millis() - TickA) < ACTION_JITTER_PERIOD_MILLISEC)
+    return;
+  TickA = millis();
+  
   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSA_TRIGGER);
   
@@ -24,9 +29,14 @@ void IRAM_ATTR onMotionA()
 
 }
 
+volatile unsigned long TickB = 0;
 void IRAM_ATTR onMotionB()
 {
-  portENTER_CRITICAL(&resourceLock);
+  if(abs(millis() - TickB) < ACTION_JITTER_PERIOD_MILLISEC)
+    return;
+  TickB = millis();
+ 
+   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSB_TRIGGER);
 
   // Turnning on the lamp segments A and B immediately for the default duration
@@ -39,8 +49,13 @@ void IRAM_ATTR onMotionB()
   portEXIT_CRITICAL(&resourceLock);
 }
 
+volatile unsigned long TickC = 0;
 void IRAM_ATTR onMotionC()
 {
+  if(abs(millis() - TickC) < ACTION_JITTER_PERIOD_MILLISEC)
+    return;
+  TickC = millis();
+ 
   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSC_TRIGGER);
   
@@ -51,8 +66,13 @@ void IRAM_ATTR onMotionC()
   portEXIT_CRITICAL(&resourceLock);
 }
 
+volatile unsigned long TickD = 0;
 void IRAM_ATTR onMotionD()
 {
+  if(abs(millis() - TickD) < ACTION_JITTER_PERIOD_MILLISEC)
+    return;
+  TickD = millis();
+ 
   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSD_TRIGGER);
 
@@ -66,8 +86,13 @@ void IRAM_ATTR onMotionD()
   portEXIT_CRITICAL(&resourceLock);
 }
 
+volatile unsigned long TickE = 0;
 void IRAM_ATTR onMotionE()
 {
+  if(abs(millis() - TickE) < ACTION_JITTER_PERIOD_MILLISEC)
+    return;
+  TickE = millis();
+ 
   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSE_TRIGGER);
 
@@ -80,8 +105,13 @@ void IRAM_ATTR onMotionE()
   portEXIT_CRITICAL(&resourceLock);
 }
 
+volatile unsigned long TickF = 0;
 void IRAM_ATTR onMotionF()
 {
+  if(abs(millis() - TickF) < ACTION_JITTER_PERIOD_MILLISEC)
+    return;
+  TickF = millis();
+ 
   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSF_TRIGGER);
 
@@ -91,8 +121,13 @@ void IRAM_ATTR onMotionF()
   portEXIT_CRITICAL(&resourceLock);
 }
 
+volatile unsigned long TickG = 0;
 void IRAM_ATTR onMotionG()
 {
+  if(abs(millis() - TickG) < ACTION_JITTER_PERIOD_MILLISEC)
+    return;
+  TickG = millis();
+ 
   portENTER_CRITICAL(&resourceLock);
   gReport.AddAction(Report::eAction::MSG_TRIGGER);
 
@@ -101,6 +136,7 @@ void IRAM_ATTR onMotionG()
   
   portEXIT_CRITICAL(&resourceLock);
 }
+
 
 void lightingControlProcess(void * parameter)
 { 
