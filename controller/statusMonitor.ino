@@ -15,6 +15,13 @@ void systemMonitorProcess(void * parameter) {
     //setTime(11, 52, 12, 8, 12, 2019);
     //int y = year;
     //Serial.printf("%4d-%2d-%2D  %2d:%2d:%2d\r\n", year(), month(), day(), hour(), minute(), second());
+
+
+    
+    //portENTER_CRITICAL(&resourceLock);
+    //String activities = gReport.Export();
+    //portEXIT_CRITICAL(&resourceLock);
+    //Serial.println(activities);
     
 
     if(wifiStatus == eWifiStatus::CONNECTION_ACTIVE)

@@ -138,17 +138,40 @@ bool SendReport()
     params = params + "&mode=test&";
 
   portENTER_CRITICAL(&resourceLock);
-  params = params + gReport.Export();
+  String content = gReport.Export();
   gReport.Reset();
   portEXIT_CRITICAL(&resourceLock);
 
   String loggerUrlPath = PRODUCTION_MODE ? PRODUCTION_LOGGER_URL_PATH : TEST_LOGGER_URL_PATH;
   String dataEncodedUrl = loggerUrlPath + params;
   //Serial.println(dataEncodedUrl);
-  Serial.println(params);
-  client.print(String("GET ") + dataEncodedUrl +" HTTP/1.1\r\n" +
+  //Serial.println(params);
+  
+  //client.print(String("POST ") + dataEncodedUrl +" HTTP/1.1\r\n" +
+  //   "Host: " + LOGGER_URL_HOST + "\r\n" + 
+  //   "Connection: close\r\n\r\n");
+
+  client.print(String("POST ") + loggerUrlPath +" HTTP/1.1\r\n" +
      "Host: " + LOGGER_URL_HOST + "\r\n" + 
-     "Connection: close\r\n\r\n");
+     "Connection: close\r\n" + 
+     "Content-Length: " + content.length() + "\r\n" +
+     "Content-Type: application/text;charset=UTF-8\r\n\r\n"+
+     content +"\r\n");
+
+  
+/*
+  Serial.println(dataEncodedUrl);
+  Serial.println(content);
+  client.print(String("POST ") +  + " HTTP/1.1\r\n" +
+    "Host: " + LOGGER_URL_HOST + "\r\n" +
+    "Connection: close\r\n" +
+    "Content-Type: application/text" +
+    //"Authorization: Bearer " + authorization_code + "\r\n" +
+    "Content-Length: " + content.length() + "\r\n" +
+    "\r\n" +
+    content + "\r\n");
+*/
+      
 
   //Waiting for the webservice to respond
   String response = "waiting...";
@@ -156,6 +179,8 @@ bool SendReport()
   {
     response = client.readString();
     response.trim();
+
+    Serial.println("Waiting for report service response");
   }
   
   client.stop();
@@ -337,7 +362,7 @@ bool SyncClock()
       {
         JsonObject obj = doc.as<JsonObject>();
         time_t unixtime = obj["unixtime"];
-        unixtime += (int) obj["raw_offset"];
+        //unixtime += (int) obj["raw_offset"];
         setTime(unixtime);        
         Serial.print("Time Data: "); Serial.println(timeData);
         success = true;

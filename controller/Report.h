@@ -97,10 +97,12 @@ class Report
       Actions[Index] = action;
       ++Index;
 
-      Serial.printf("%d: %s\r\n", Index, GetActionString(action));
+      //Serial.printf("%d: %s\r\n", Index, GetActionString(action));
     }
     else
-      Serial.printf("SKIP: %s\r\n", GetActionString(action));
+    {
+      //Serial.printf("SKIP: %s\r\n", GetActionString(action));
+    }
     
     return Index;
   }
@@ -127,6 +129,12 @@ class Report
   String Export() volatile
   {
     String ret = "";
+    
+    for(int i=0; i<Index; ++i)
+    {
+      ret = ret + (i > 0 ? "," : "") + String(Actions[i]) + "_" + String(Timestamps[i]);
+    }
+    
 /*
     if(ActionHistories[MSA_TRIGGER].Count > 0)
       ret = ret + "&mA=" + ActionHistories[MSA_TRIGGER].Export();
