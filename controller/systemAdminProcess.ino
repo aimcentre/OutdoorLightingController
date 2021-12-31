@@ -521,9 +521,10 @@ int fetchSchedule(const char* host, int port, const char* url, unsigned short* s
   WiFiClientSecure client;
   if (!client.connect(host, port)) 
   {
-    ++gScheduleLoadFailCount;
-    Serial.printf("Connection failed (attempt %d)\n", gScheduleLoadFailCount);
-    Serial.printf("%s%s\r\n", host, url);
+    if(gScheduleLoadFailCount < 1000000)
+      ++gScheduleLoadFailCount;
+    Serial.printf("Connection failed (retried at least %d times since reboot or last success.)\n", gScheduleLoadFailCount);
+    //Serial.printf("%s%s\r\n", host, url);
     return 0;
   }
 

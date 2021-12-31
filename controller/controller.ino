@@ -38,7 +38,6 @@ void setup()
   Serial.print("AP IP address: ");
   Serial.println(IP);
   
-  
   // Initializing WiFi network credentials
   //WiFi.begin(settings.wifiSsid, settings.wifiPassword);
 
@@ -47,7 +46,12 @@ void setup()
 
   // Initializing timer interrupt system used for lighting control
   initLightingControlSystem();
-  
+
+  //Initializing the following flag to track whether any schedule-loading errors were handled since the last reboot.
+  //We set it to false here since the system was just rebooted, so no schedule-loading attempt is made yet to determine'
+  //whether the loading was successful or not. See lightingControlParams.h for more documentation.
+  gHandledScheduleLoadingErrorsSinceLastReboot = false;
+
 
  // Setting up lighting control routines to be executed on the core 0
   xTaskCreatePinnedToCore(

@@ -38,5 +38,10 @@ volatile bool freshlyRebooted = true;
 volatile unsigned long gScheduleLoadFailCount = 0;
 volatile bool gWasNightInPreviousCycle = false;
 
+//The following flag is used to track whether any schedule-loading errors were handled since the last reboot.
+//We set it to false in the initialization "setup()" function and use it in the lightingControlProcess() to 
+//ensure we manually schedule the segment A to "ON" for a period of time if the schedule loading failed immediately
+volatile bool gHandledScheduleLoadingErrorsSinceLastReboot = false;
+
 #endif
  

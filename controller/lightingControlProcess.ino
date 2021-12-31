@@ -149,16 +149,50 @@ void lightingControlProcess(void * parameter)
       gSunlightSensor.OnTick();
       bool isNight = gSunlightSensor.IsNight();
 
-      if(gWasNightInPreviousCycle == false && isNight && (gScheduleLoadFailCount > 5)){
-        //Here, the environment lighting turned from day to night AND the last attempt to load the 
-        //schedule was failed in the last N number of times, consecuitively. In this case, we schedule
-        //the lamp-segment-A for 5.5 hours from now.
+      Serial.printf("Schedule-loading failure minimum count: %d. Is Night prev => current): %d => %d\n", gScheduleLoadFailCount, gWasNightInPreviousCycle, isNight);
 
-        int turnOnTimeSec = 19800;
-        Serial.printf("Getting dark but schedule loading had failed %d times, so proactively scheduling Segment A for %.2f hours from now.\n", gScheduleLoadFailCount, turnOnTimeSec/3600.0);
-        gSegmentA.ScheduleCycle(0, turnOnTimeSec);
+     //if(gWasNightInPreviousCycle != isNight){
+     //   Serial.printf("Is Night: %d\n", isNight);
+      //}
+
+      //BEGIN: Handle Schedule Loading Errors
+      //=====================================
+      //Determining whether we need to schedule the lamp segment A to turn on for SEGMENT_A_EVENING_ON_TIME_DEFAULT_HRS hours from the current time.
+      //This is determined as follows:
+      // . (a) We must have failed to load the schedule for more than "scheduleLoadFailureCountThreshold" (defined below) times. AND
+      // . (b) one of the following conditions
+      //        (b.1) It is already night (i.e. isNight is true) AND we have never handled aschedule load error yet since the last reboot. 
+      //              This means, the system was reset at night and the system has failed to load the schedule from the calendar. In this case,
+      //              we immediately turn on the lamp segment A for the period defined by SEGMENT_A_EVENING_ON_TIME_DEFAULT_HRS since we actually
+      //              cannot determine whether it is early evening or not due to inaccuracy of the system clock.
+      //        (b.2) If the night status changed from day to night AND if the schedule-loading was unsuccessful. In this case we do not care whereth
+      //              the errors were already handled or not since if they were alrady handled, then that would be for the last night (not for the
+      //              night starting from this moment)
+      //
+      
+      int scheduleLoadFailureCountThreshold = 5;
+      if(gScheduleLoadFailCount > scheduleLoadFailureCountThreshold) //Condition A
+      {
+        //By now, schedule-loading errors already happened in the last several loading attempts.
+        bool rebootedAtNightAndScheduleLoadingErrorsNotHandledYet = isNight && (gHandledScheduleLoadingErrorsSinceLastReboot == false); //Condition b.1
+
+        bool transitioningFromDayToNight = gWasNightInPreviousCycle == false && isNight; //Condition b.2
+
+        if(rebootedAtNightAndScheduleLoadingErrorsNotHandledYet || transitioningFromDayToNight)
+        {
+          int turnOnTimeSec = round(SEGMENT_A_EVENING_ON_TIME_DEFAULT_HRS * 3600);
+          Serial.printf("Getting dark or rebooted at night, but schedule loading had failed at least %d times. Proactively scheduling Segment A for %.2f hours from now.\n", gScheduleLoadFailCount, SEGMENT_A_EVENING_ON_TIME_DEFAULT_HRS);
+          gSegmentA.ScheduleCycle(0, turnOnTimeSec);
+            
+        }
+
+        //We have now already handled the schedule-loading errors, so we set the following flag to true.
+        gHandledScheduleLoadingErrorsSinceLastReboot = true;
       }
-      gWasNightInPreviousCycle = true;
+      
+      gWasNightInPreviousCycle = isNight;
+      //END: Handle Schedule Loading Errors
+      //====================================
 
       //Serial.printf("Is night: %d\r\n", isNight);
       int ambientDarkness = gSunlightSensor.getDarknessLevel();

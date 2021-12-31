@@ -54,6 +54,8 @@ class SunlightSensor
       //Serial.printf("D[%d] = %d\r\n", i , mDarknessLevelBuffer[i]);
     }
     mDarknessLevel = mDarknessLevel / count;
+    Serial.printf("Darkness Level = %d\r\n", mDarknessLevel);
+
 
     // Hysteresis based thresholding
     if(mIsNight)
