@@ -33,7 +33,10 @@ volatile int darknessLevel = 0;
 enum eWifiStatus{ SUCCESS = 1, CONNECTION_INPROGRESS, CONNECTION_ACTIVE, CONNECTION_FAILED};
 volatile eWifiStatus wifiStatus = SUCCESS;
 volatile unsigned long wifiAttemtTimeStamp = 0;
-volatile bool freshlyRebooted = true;                                       
+volatile bool freshlyRebooted = true;  
+
+volatile unsigned long gScheduleLoadFailCount = 0;
+volatile bool gWasNightInPreviousCycle = false;
 
 #endif
  

@@ -148,6 +148,18 @@ void lightingControlProcess(void * parameter)
     {
       gSunlightSensor.OnTick();
       bool isNight = gSunlightSensor.IsNight();
+
+      if(gWasNightInPreviousCycle == false && isNight && (gScheduleLoadFailCount > 5)){
+        //Here, the environment lighting turned from day to night AND the last attempt to load the 
+        //schedule was failed in the last N number of times, consecuitively. In this case, we schedule
+        //the lamp-segment-A for 5.5 hours from now.
+
+        int turnOnTimeSec = 19800;
+        Serial.printf("Getting dark but schedule loading had failed %d times, so proactively scheduling Segment A for %.2f hours from now.\n", gScheduleLoadFailCount, turnOnTimeSec/3600.0);
+        gSegmentA.ScheduleCycle(0, turnOnTimeSec);
+      }
+      gWasNightInPreviousCycle = true;
+
       //Serial.printf("Is night: %d\r\n", isNight);
       int ambientDarkness = gSunlightSensor.getDarknessLevel();
       
