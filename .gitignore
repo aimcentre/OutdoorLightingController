@@ -1,2 +1,6 @@
-
+.vs
 V1-ESP32/controller/appConfig.h
+bin
+obj
+logs
+appsettings.json
