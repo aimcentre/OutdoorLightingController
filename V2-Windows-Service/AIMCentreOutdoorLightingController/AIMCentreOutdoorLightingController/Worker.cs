@@ -7,37 +7,57 @@ namespace AIMCentreOutdoorLightingController
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        protected SensorInput _sensorInput;
+        protected ADCInput _adcInput;
 
         public Worker(ILogger<Worker> logger)
         {
             _logger = logger;
+            _adcInput = new ADCInput("COM4");
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
             {
-
-                var ports = UsbPortHandler.ListPorts();
-                string? port = ports.Length > 0 ? ports[0] : null;
-
-                _sensorInput = new SensorInput(port);
-
-
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    //_logger.LogInformation($"Ports: {string.Join(", ", ports)}");
-                    string data = _sensorInput.ReadLine();
-                    Console.WriteLine(data);
+                    CheckAdc();
 
                     await Task.Delay(1000, stoppingToken);
                 }
+
+                if (_adcInput.IsOpened)
+                {
+                    Console.WriteLine("Closing ADC Port");
+                    _adcInput.Close();
+                }
+
             }
             catch(LightingControllerException ex)
             {
                 _logger.LogError(ex.Message);
 
+            }
+        }
+
+        protected void CheckAdc()
+        {
+            if (!_adcInput.IsConnected)
+            {
+                Console.WriteLine("ADC Not Connected");
+                return;
+            }
+
+            if (!_adcInput.IsOpened)
+            {
+                if (!_adcInput.TryOpen())
+                    Console.WriteLine("Canot Open ADC Port");
+            }
+
+            if (!_adcInput.IsOpened)
+            { 
+                Console.WriteLine("ADC Port Not Opened");
+                return;
             }
         }
     }
