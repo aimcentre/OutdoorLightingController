@@ -3,14 +3,13 @@ using IO.Lib.Exceptions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO.Ports;
+using System.Net.Security;
 using System.Security.Cryptography.Xml;
 
 namespace IO.Lib.IO
 {
     public class ADCInput : UsbPortHandler
     {
-        private readonly string _portName;
-        private readonly SerialPort _comPort;
         public int IN0 { get; private set; }
         public int IN1 { get; private set; }
         public int IN2 { get; private set; }
@@ -24,41 +23,16 @@ namespace IO.Lib.IO
 
         private string? _lastLine;
         public ADCInput(string portName)
+            : base(portName, 115200)
         {
-            _portName = portName;
-            _comPort = new SerialPort(portName, 115200);
             _comPort.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
         }
 
-        public bool IsConnected => ListPorts().Contains(_portName);
-        public bool IsOpened => _comPort.IsOpen;
-
-        public bool TryOpen()
+        public override bool TryOpen()
         {
-            try
-            {
-                _comPort.DtrEnable = true;
-                _comPort.Open();
-                _lastLine = null;
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public void Close()
-        {
-            try
-            {
-                _comPort.DtrEnable = false;
-                _comPort.Close();
-            }
-            catch(Exception)
-            {
-
-            }
+            _lastLine = null;
+            _comPort.DtrEnable = true;
+            return base.TryOpen();
         }
 
         private void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
