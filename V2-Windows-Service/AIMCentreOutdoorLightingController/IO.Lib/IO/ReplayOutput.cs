@@ -2,14 +2,17 @@
 {
     public class ReplayOutput : UsbPortHandler
     {
-        private string _data;
+        bool _isOn;
 
-        const string P1ON = "A00100A1";
-        const string P1OFF = "A00101A2";
+        // ON/OFF command pairs for relay pins. 
+        string[] P1 = ["A00100A1", "A00101A2"];
+        string[] P2 = ["A00100A1", "A00101A2"];
+        string[] P3 = ["A00100A1", "A00101A2"];
+
         public ReplayOutput(string portName)
             : base(portName, 9600, 8)
         {
-            _data = "A00101A2";
+            _isOn = false;
         }
 
         public override bool TryOpen()
@@ -20,12 +23,14 @@
 
         public void Toggle()
         {
-            if (_data == P1ON)
-                _data = P1OFF;
-            else
-                _data = P1ON;
+            string[] pin = P1;
 
-            Write(_data);
+            if (_isOn) //If PIN is ON
+                Write(pin[0]);
+            else
+                Write(pin[1]);
+
+            _isOn = !_isOn;
         }
 
 
