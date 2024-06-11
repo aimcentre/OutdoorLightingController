@@ -37,42 +37,16 @@ namespace AIMCentreOutdoorLightingController
                     if (adc)
                     {
                         _adc.CheckIOModule("ADC");
-                        await Task.Delay(2000, stoppingToken);
                     }
                     else
                     {
                         if (_relay.CheckIOModule("Relay"))
                         {
                             _relay.Toggle();
-                            await Task.Delay(500, stoppingToken);
-
-                            //int x = 0;
-                            //foreach (var rate in rates)
-                            //{
-                            //    //port.BaudRate = 9600;
-                            //    //port.DataBits = 8;
-                            //    //port.Parity = Parity.None;
-                            //    //port.StopBits = StopBits.One;
-
-                            //    //byte[] bytes = Encoding.ASCII.GetBytes("A0FFFF");
-                            //    string s = $"A0010{x}A2";
-                            //    byte[] bytes =
-                            //        //BitConverter.GetBytes(0x00)
-                            //        //Encoding.ASCII.GetBytes("A00101A2")
-                            //        Hex2Binary(s)
-                            //        ;
-
-                            //    Console.WriteLine(s);
-                            //    port.Write(bytes, 0, bytes.Length);
-
-                            //    x = x == 0 ? 1 : 0;
-                            //    await Task.Delay(2000, stoppingToken);
-
-                            //}
                         }
-
                     }
 
+                    await Task.Delay(500, stoppingToken);
                 }
 
                 if (_adc.IsOpened)
