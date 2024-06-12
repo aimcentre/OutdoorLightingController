@@ -10,14 +10,14 @@ namespace AIMCentreOutdoorLightingController
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        protected ADCInput _adc;
-        protected ReplayOutput _relay;
+        protected ADC _adc;
+        protected Replay _relay;
 
         public Worker(ILogger<Worker> logger)
         {
             _logger = logger;
-            _adc = new ADCInput("COM4");
-            _relay = new ReplayOutput("COM4");
+            _adc = new ADC("COM4");
+            _relay = new Replay("COM4");
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -32,6 +32,8 @@ namespace AIMCentreOutdoorLightingController
                 SerialPort port = _relay._comPort;
                 await Task.Delay(2000, stoppingToken);
 
+                int delay = 1000;
+
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     if (adc)
@@ -42,11 +44,19 @@ namespace AIMCentreOutdoorLightingController
                     {
                         if (_relay.CheckIOModule("Relay"))
                         {
-                            _relay.Toggle();
+                            await _relay.TurnAll(true);
+                            await Task.Delay(delay, stoppingToken);
+                            await _relay.TurnAll(false);
                         }
+
+                        //if (_relay.CheckIOModule("Relay"))
+                        //{
+                        //    _relay.Toggle(i);
+                        //}
+                        //i = (++i) % 16;
                     }
 
-                    await Task.Delay(500, stoppingToken);
+                    await Task.Delay(delay, stoppingToken);
                 }
 
                 if (_adc.IsOpened)

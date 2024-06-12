@@ -8,7 +8,7 @@ using System.Security.Cryptography.Xml;
 
 namespace IO.Lib.IO
 {
-    public class ADCInput : UsbPortHandler
+    public class ADC : UsbPortHandler
     {
         public int IN0 { get; private set; }
         public int IN1 { get; private set; }
@@ -22,7 +22,7 @@ namespace IO.Lib.IO
         public int IN9 { get; private set; }
 
         private string? _lastLine;
-        public ADCInput(string portName)
+        public ADC(string portName)
             : base(portName, 115200)
         {
             _comPort.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);

@@ -8,16 +8,18 @@ namespace IO.Lib.IO
     public class UsbPortHandler
     {
         protected readonly string _portName;
+        private readonly int _interCommandDelayMilliseconds;
         public readonly SerialPort _comPort;
 
         public static string[] ListPorts() => SerialPort.GetPortNames();
 
-        public UsbPortHandler(string portName, int boadRate, int dataBits)
+        public UsbPortHandler(string portName, int boadRate, int dataBits, int interCommandDelayMilliseconds)
         {
             _portName = portName;
             //_comPort = new SerialPort(portName, boadRate, Parity.Odd, dataBits, StopBits.One);
-            _comPort = new SerialPort(portName, 9600);
+            _comPort = new SerialPort(portName, boadRate, Parity.None, dataBits, StopBits.One);
             Console.WriteLine("relay");
+            _interCommandDelayMilliseconds = interCommandDelayMilliseconds;
         }
 
         public UsbPortHandler(string portName, int boadRate)
@@ -78,12 +80,14 @@ namespace IO.Lib.IO
             return true;
         }
 
-        public void Write(string hexString)
+        public async Task Write(string hexString)
         {
             Console.WriteLine(hexString);
 
             byte[] bytes = Hex2Binary(hexString);
             _comPort.Write(bytes, 0, bytes.Length);
+
+            await Task.Delay(_interCommandDelayMilliseconds);
         }
 
         private byte[] Hex2Binary(string hex)
