@@ -8,7 +8,7 @@ using System.Security.Cryptography.Xml;
 
 namespace IO.Lib.IO
 {
-    public class ADC : UsbPortHandler
+    public class ADC : SerialPortDevice
     {
         public int IN0 { get; private set; }
         public int IN1 { get; private set; }
@@ -21,11 +21,23 @@ namespace IO.Lib.IO
         public int IN8 { get; private set; }
         public int IN9 { get; private set; }
 
+        public int CHECK_PIN => IN8;
+        public int NIGHT_PIN => IN9;
+
+        //public static readonly int SENSOR1 = 1;
+        //public static readonly int SENSOR2 = 3;
+        //public static readonly int SENSOR3 = 5;
+        //public static readonly int SENSOR4 = 7;
+
+
         private string? _lastLine;
+        public bool DataSetReceived { get; protected set; }
+
         public ADC(string portName)
             : base(portName, 115200)
         {
             _comPort.DataReceived += new SerialDataReceivedEventHandler(port_DataReceived);
+            DataSetReceived = false;
         }
 
         public override bool TryOpen()
@@ -41,6 +53,10 @@ namespace IO.Lib.IO
                 throw new LightingControllerException("Port is not opened");
 
             int n = _comPort.BytesToRead;
+
+            if (n > 0)
+                DataSetReceived = true;
+
             byte[] bytes = new byte[n];
             _comPort.Read(bytes, 0, n);
             string data = System.Text.Encoding.UTF8.GetString(bytes);

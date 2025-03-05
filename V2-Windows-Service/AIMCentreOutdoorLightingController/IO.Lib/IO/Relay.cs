@@ -1,8 +1,12 @@
-﻿using System.IO.Ports;
+﻿using Microsoft.AspNetCore.Http;
+using System.IO.Ports;
 
 namespace IO.Lib.IO
 {
-    public class Replay : UsbPortHandler
+    /// <summary>
+    /// This class represents the USB Relay module.
+    /// </summary>
+    public class Relay : SerialPortDevice
     {
         public static RelayConfig[] RelayConfigs =
             [
@@ -24,8 +28,14 @@ namespace IO.Lib.IO
                 new RelayConfig("A01000A1", "A01001A2")
             ];
 
-        public Replay(string portName)
-            : base(portName, 9600, 8, 100)
+        public static readonly int CHECK_PIN = 0;
+        public static readonly int Lamp1 = 1;
+        public static readonly int Lamp2 = 3;
+        public static readonly int Lamp3 = 5;
+        public static readonly int Lamp4 = 7;
+
+        public Relay(string portName)
+            : base(portName, 9600, 8, 25)
         {
         }
 
@@ -53,6 +63,18 @@ namespace IO.Lib.IO
             foreach (var relay in RelayConfigs)
                 await Write(on ? relay.OnCommand : relay.OffCommand);
         }
+
+        public async Task Set(int pin, bool on)
+        {
+            Console.WriteLine(on ? "ON" : "OFF" + $" pin {pin}");
+            await Write(on ? RelayConfigs[pin].OnCommand : RelayConfigs[pin].OffCommand);
+        }
+
+        public async Task SetCheckPin(bool on) => await Set(CHECK_PIN, on);
+        public async Task SetL1(bool on) => await Set(Lamp1, on);
+        public async Task SetL2(bool on) => await Set(Lamp2, on);
+        public async Task SetL3(bool on) => await Set(Lamp3, on);
+        public async Task SetL4(bool on) => await Set(Lamp4, on);
 
     }
 }

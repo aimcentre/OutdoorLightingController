@@ -6,6 +6,12 @@ using System.Threading.Tasks;
 
 namespace IO.Lib.IO
 {
+    /// <summary>
+    /// This class represents a relay configuration entry, which consists of: 
+    /// 1. The command for turning on a relay pin
+    /// 2. The command for turning off a relay pin
+    /// 3. A boolean status flag that represents whether the relay pin is currently on.
+    /// </summary>
     public class RelayConfig
     {
         public string OnCommand { get; private set; }
